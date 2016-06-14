@@ -1,4 +1,3 @@
-import Freezer from 'freezer-js'
 import path from 'path'
 import EventEmitter from 'events'
 

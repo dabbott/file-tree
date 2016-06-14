@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "./scripts/compile.sh",
-    "watch": "chokidar 'packages/**/src/**/*.js' -c 'npm run build'"
+    "watch": "npm run build && chokidar 'packages/**/src/**/*.js' -c 'npm run build'"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",

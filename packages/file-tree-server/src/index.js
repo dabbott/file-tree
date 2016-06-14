@@ -2,8 +2,7 @@ import path from 'path'
 import EventEmitter from 'events'
 import chokidar from 'chokidar'
 
-import chokidarAdapter from 'file-tree-common/lib/utils/chokidarAdapter'
-import Tree from 'file-tree-common/lib/Tree'
+import { Tree, chokidarAdapter } from 'file-tree-common'
 
 const actions = {
   initialState: (state, rootPath) => {
@@ -28,7 +27,7 @@ const actions = {
 
 const createAction = (type, ...args) => actions[type](...args)
 
-export default class extends EventEmitter {
+module.exports = class extends EventEmitter {
 
   get watcher() {
     return this._watcher

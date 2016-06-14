@@ -1,5 +1,5 @@
 {
-  "name": "file-tree-transport",
+  "name": "file-tree-server-transport-socket.io",
   "version": "1.0.0",
   "description": "",
   "main": "lib/index.js",
