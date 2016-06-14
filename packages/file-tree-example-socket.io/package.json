@@ -1,5 +1,5 @@
 {
-  "name": "node-file-tree-example-socket.io",
+  "name": "file-tree-example-socket.io",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -23,6 +23,9 @@
     "socket.io": "^1.4.6",
     "socket.io-client": "^1.4.6",
     "webpack": "^1.12.9",
-    "webpack-dev-server": "^1.14.0"
+    "webpack-dev-server": "^1.14.0",
+    "file-tree-client": "*",
+    "file-tree-server": "*",
+    "react-file-tree": "*"
   }
 }

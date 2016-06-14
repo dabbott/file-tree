@@ -1,5 +1,5 @@
 {
-  "name": "node-file-tree-server",
+  "name": "file-tree-server",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",

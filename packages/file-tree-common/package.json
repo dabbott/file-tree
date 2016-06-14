@@ -1,5 +1,5 @@
 {
-  "name": "node-file-tree-common",
+  "name": "file-tree-common",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",

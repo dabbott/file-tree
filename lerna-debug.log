@@ -1,0 +1,32 @@
+lerna(info)    Lerna v2.0.0-beta.18
+lerna(debug)   Attempting running BootstrapCommand.initialize
+lerna(debug)   Successfully ran BootstrapCommand.initialize
+lerna(debug)   Attempting running BootstrapCommand.execute
+lerna(info)    Linking all dependencies
+lerna(error)   Errored while running BootstrapCommand.execute
+    Error: Command failed: /bin/sh -c npm install file-tree-common@*
+    npm ERR! Darwin 15.2.0
+    npm ERR! argv "/Users/devinabbott/.nvm/versions/node/v5.3.0/bin/node" "/Users/devinabbott/.nvm/versions/node/v5.3.0/bin/npm" "install" "file-tree-common@*"
+    npm ERR! node v5.3.0
+    npm ERR! npm  v3.3.12
+    npm ERR! code E404
+    
+    npm ERR! 404 Registry returned 404 for GET on https://registry.npmjs.org/file-tree-common
+    npm ERR! 404 
+    npm ERR! 404 'file-tree-common' is not in the npm registry.
+    npm ERR! 404 You should bug the author to publish it (or use the name yourself!)
+    npm ERR! 404 
+    npm ERR! 404 Note that you can also install from a
+    npm ERR! 404 tarball, folder, http url, or git url.
+    
+    npm ERR! Please include the following file with any support request:
+    npm ERR!     /Users/devinabbott/Projects/file-tree/packages/file-tree-client/npm-debug.log
+    
+        at ChildProcess.exithandler (child_process.js:213:12)
+        at emitTwo (events.js:87:13)
+        at ChildProcess.emit (events.js:172:7)
+        at maybeClose (internal/child_process.js:818:16)
+        at Socket.<anonymous> (internal/child_process.js:319:11)
+        at emitOne (events.js:77:13)
+        at Socket.emit (events.js:169:7)
+        at Pipe._onclose (net.js:469:12)
