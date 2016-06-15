@@ -13,7 +13,9 @@ class Tree extends EventEmitter {
     this.finishTransaction = this.finishTransaction.bind(this)
 
     this.inTransaction = false
-    this.state = {}
+    this.state = {
+      version: 0,
+    }
     this.options = options
 
     this.set(rootPath)
@@ -46,13 +48,14 @@ class Tree extends EventEmitter {
 
     const {options, state} = this
 
+    state.version++
+
     if (options.emitRelative) {
       const {ui, stat} = state
 
       this.emit('change', {
+        ...state,
         tree: this.get(this.rootPath),
-        stat: stat,
-        ui: ui,
       })
     } else {
       this.emit('change', state)
@@ -146,6 +149,19 @@ class Tree extends EventEmitter {
     this.emitChange()
 
     return item
+  }
+  setMetadataField(itemPath, field, value) {
+    // let metadata = this.state.ui[itemPath]
+    //
+    // if (! metadata) {
+    //   metadata = this.state.ui[itemPath] = {}
+    // }
+    //
+    // metadata[field] = value
+
+    this.state.ui[itemPath] = value
+
+    this.emitChange()
   }
   removeFile(itemPath) {
     this.remove(itemPath)

@@ -44,6 +44,10 @@ module.exports = class extends EventEmitter {
     })
   }
 
+  updateNodeMetadata(path, field, value) {
+    this._tree.setMetadataField(path, field, value)
+  }
+
   _emitAction(type, ...args) {
     const action = createAction(type, ...args)
     this.emit(type, action)

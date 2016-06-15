@@ -30,6 +30,7 @@ const styles = {
 export default class extends Component {
 
   static defaultProps = {
+    version: 0,
     tree: null,
     ui: null,
     onToggleNode: () => {},
@@ -77,7 +78,7 @@ export default class extends Component {
     const {ui} = this.props
     const {path} = node
 
-    ui[path] ? delete ui[path] : ui[path] = true
+    // ui[path] ? delete ui[path] : ui[path] = true
     this.props.onToggleNode(node, ui[path])
   }
 
@@ -103,7 +104,7 @@ export default class extends Component {
     const {node, depth} = this.indexCache[index - this.indexOffset]
     const {path} = node
 
-    // console.log('node', index)
+    // console.log('node', ui[path], path)
 
     return (
       <Node
@@ -117,7 +118,7 @@ export default class extends Component {
   }
 
   render() {
-    const {tree} = this.props
+    const {tree, version} = this.props
     const {visibleNodes} = this.state
 
     console.log('rendering tree')
@@ -135,8 +136,7 @@ export default class extends Component {
                 rowCount={visibleNodes}
                 width={width}
                 // Updates the VirtualScroll when data changes
-                tree={tree}
-                // force={Math.random()}
+                force={version}
               />
             )}
           </AutoSizer>

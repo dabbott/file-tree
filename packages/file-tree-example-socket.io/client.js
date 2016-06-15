@@ -9,16 +9,18 @@ import FileTree from 'react-file-tree'
 const socket = io('http://localhost:3000')
 const fileTree = new FileTreeClient(transport(socket))
 
-fileTree.on('change', ({payload: {tree, ui}}) => {
+fileTree.on('change', ({payload: {tree, ui, version}}) => {
   const mountNode = document.querySelector('#app')
-  console.log('tree', tree, 'ui', ui)
+  console.log('version', version, 'tree', tree, 'ui', ui)
 
   ReactDOM.render(
     <FileTree
+      version={version}
       tree={tree}
       ui={ui}
-      onToggleNode={({path}, expanded) => {
+      onToggleNode={({path}) => {
         console.log('toogled')
+        fileTree.updateNodeMetadata(path, 'expanded', ! ui[path])
         // fileTree._emitChange(fileTree.tree.state)
         // emitChange()
         // if (expanded) {
