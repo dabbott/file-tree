@@ -6,7 +6,7 @@ const DIRECTORY = __dirname
 module.exports = {
   devServer: {
     contentBase: DIRECTORY,
-    port: 3000,
+    port: 3001,
   },
   entry: {
     client: path.join(DIRECTORY, 'client.js'),
@@ -28,6 +28,12 @@ module.exports = {
         loader: "style-loader!css-loader"
       },
     ]
+  },
+  resolve: {
+    alias: {
+      react: path.join(DIRECTORY, 'node_modules/react'),
+      ['react-dom']: path.join(DIRECTORY, 'node_modules/react-dom'),
+    },
   },
   output: {
     filename: '[name]-bundle.js'

@@ -26,6 +26,7 @@
     "webpack-dev-server": "^1.14.0",
     "file-tree-client": "*",
     "file-tree-server": "*",
+    "file-tree-client-transport-socket.io": "*",
     "file-tree-server-transport-socket.io": "*",
     "react-file-tree": "*"
   }

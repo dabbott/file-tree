@@ -1,6 +1,7 @@
 export Tree from './Tree'
 export WorkQueue from './WorkQueue'
+export createAction from './createAction'
 
 export chokidarAdapter from './utils/chokidarAdapter'
-export pathUtils from './utils/pathUtils'
-export treeUtils from './utils/treeUtils'
+export * as pathUtils from './utils/pathUtils'
+export * as treeUtils from './utils/treeUtils'

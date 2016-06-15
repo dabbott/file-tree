@@ -5,7 +5,7 @@ import { split, within } from './utils/pathUtils'
 import { ensureNode, createFileNode, createDirectoryNode } from './utils/treeUtils'
 
 class Tree extends EventEmitter {
-  constructor(rootPath = '/') {
+  constructor(rootPath = '/', options = {}) {
     super()
 
     this.emitChange = this.emitChange.bind(this)
@@ -13,8 +13,8 @@ class Tree extends EventEmitter {
     this.finishTransaction = this.finishTransaction.bind(this)
 
     this.inTransaction = false
-
     this.state = {}
+    this.options = options
 
     this.set(rootPath)
   }
@@ -44,7 +44,19 @@ class Tree extends EventEmitter {
       return
     }
 
-    this.emit('change', this.state)
+    const {options, state} = this
+
+    if (options.emitRelative) {
+      const {ui, stat} = state
+
+      this.emit('change', {
+        tree: this.get(this.rootPath),
+        stat: stat,
+        ui: ui,
+      })
+    } else {
+      this.emit('change', state)
+    }
   }
   startTransaction() {
     if (this.inTransaction) {

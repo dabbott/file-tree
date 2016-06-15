@@ -1,31 +1,7 @@
-import path from 'path'
 import EventEmitter from 'events'
 import chokidar from 'chokidar'
 
-import { Tree, chokidarAdapter } from 'file-tree-common'
-
-const actions = {
-  initialState: (state, rootPath) => {
-    return {
-      type: "initialState",
-      payload: { state, rootPath },
-    }
-  },
-  change: (state) => {
-    return {
-      type: "change",
-      payload: state,
-    }
-  },
-  event: (name, path, stat) => {
-    return {
-      type: name,
-      payload: { path, stat },
-    }
-  },
-}
-
-const createAction = (type, ...args) => actions[type](...args)
+import { Tree, chokidarAdapter, createAction } from 'file-tree-common'
 
 module.exports = class extends EventEmitter {
 

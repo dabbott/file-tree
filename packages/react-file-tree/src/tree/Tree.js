@@ -3,7 +3,8 @@ import { AutoSizer, VirtualScroll } from 'react-virtualized'
 import shallowCompare from 'react-addons-shallow-compare'
 
 import Node from './Node'
-import { getVisibleNodesByIndex, countVisibleNodes } from '../../../shared/utils/treeUtils'
+import { treeUtils } from 'file-tree-common'
+const { getVisibleNodesByIndex, countVisibleNodes } = treeUtils
 
 const styles = {
   container: {
