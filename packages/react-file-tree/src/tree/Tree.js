@@ -18,14 +18,14 @@ const styles = {
     backgroundColor: '#3B3738',
     minHeight: 0,
     minWidth: 0,
-    overflow: 'none',
+    overflow: 'hidden',
     flexWrap: 'no-wrap',
   },
   autoSizerWrapper: {
     flex: '1 1 auto',
     minHeight: 0,
     minWidth: 0,
-    overflow: 'none',
+    overflow: 'hidden',
   }
 }
 

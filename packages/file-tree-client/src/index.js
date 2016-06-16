@@ -56,11 +56,12 @@ module.exports = class extends EventEmitter {
         this.tree.finishTransaction()
         break
       }
-      default: {
-        const {path, stat} = payload
-        const task = this._actions.bind(null, type, path, stat)
-        console.log('task =>', type, path)
+      case 'event': {
+        const {name, path, stat} = payload
+        const task = this._actions.bind(null, name, path, stat)
+        console.log('task =>', name, path)
         this._workQueue.push(task)
+        break
       }
     }
   }

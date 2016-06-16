@@ -1,22 +1,28 @@
 const actions = {
   initialState: (state, rootPath) => {
     return {
-      type: "initialState",
+      type: 'initialState',
       payload: { state, rootPath },
     }
   },
   change: (state) => {
     return {
-      type: "change",
+      type: 'change',
       payload: state,
     }
   },
   event: (name, path, stat) => {
     return {
-      type: name,
-      payload: { path, stat },
+      type: 'event',
+      payload: { name, path, stat },
     }
   },
+  batch: (actions) => {
+    return {
+      type: 'batch',
+      payload: actions,
+    }
+  }
 }
 
 export default (type, ...args) => actions[type](...args)

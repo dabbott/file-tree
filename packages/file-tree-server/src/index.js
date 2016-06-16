@@ -31,18 +31,12 @@ module.exports = class extends EventEmitter {
     this._batchedActions = []
 
     this._workQueue.on('finish', () => {
-      // console.log('this._batchedActions', this._batchedActions)
-
-      this.transport.send({
-        type: 'batch',
-        payload: this._batchedActions.slice(),
-      })
-
+      const actions = this._batchedActions.slice()
       this._batchedActions.length = 0
-    })
 
-    this._emitEvent = this._emitAction.bind(this, "event")
-    this._emitChange = this._emitAction.bind(this, "change")
+      const batchAction = createAction('batch', actions)
+      this.transport.send(batchAction)
+    })
 
     this.watch(rootPath)
 
@@ -74,32 +68,24 @@ module.exports = class extends EventEmitter {
     })
 
     this._tree = new Tree(rootPath)
-    this._tree.on('change', this._emitChange)
+    this._tree.on('change', (...args) => {
+      const action = createAction('change', ...args)
+      this.emit('change', action)
+    })
 
     this._watcher.on('all', chokidarAdapter(this._tree, true))
-    this._watcher.on('all', this._emitEvent)
+    this._watcher.on('all', (name, path, stat) => {
+      const action = createAction('event', name, path, stat)
+      this.emit('event', action)
+
+      this._workQueue.push(
+        this._batchAction.bind(this, this._batchedActions, action)
+      )
+    })
   }
 
   _batchAction(batch, action) {
-    // console.log('adding', action.type, 'to batch', batch.length)
     batch.push(action)
   }
 
-  _emitAction(type, ...args) {
-    const action = createAction(type, ...args)
-
-    switch (type) {
-      // case 'change': {
-      //   this.transport.send(action)
-      //   break
-      // }
-      case 'event': {
-        this._workQueue.push(
-          this._batchAction.bind(this, this._batchedActions, action)
-        )
-      }
-    }
-
-    this.emit(type, action)
-  }
 }
