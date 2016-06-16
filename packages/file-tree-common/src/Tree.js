@@ -20,7 +20,7 @@ class Tree extends EventEmitter {
 
     this.set(rootPath)
   }
-  set(rootPath, tree, stat, ui) {
+  set(rootPath, tree, stat, metadata) {
     this.rootPath = rootPath
 
     const {state} = this
@@ -35,8 +35,8 @@ class Tree extends EventEmitter {
       state.stat = stat || {}
     }
 
-    if (ui || ! state.ui) {
-      state.ui = ui || {}
+    if (metadata || ! state.metadata) {
+      state.metadata = metadata || {}
     }
 
     this.finishTransaction()
@@ -51,7 +51,7 @@ class Tree extends EventEmitter {
     state.version++
 
     if (options.emitRelative) {
-      const {ui, stat} = state
+      const {metadata, stat} = state
 
       this.emit('change', {
         ...state,
@@ -119,10 +119,10 @@ class Tree extends EventEmitter {
 
     return item
   }
-  addFile(filePath, metadata) {
-    return this.add(filePath, createFileNode(filePath, metadata))
+  addFile(filePath, stat) {
+    return this.add(filePath, createFileNode(filePath, stat))
   }
-  addDir(dirPath, metadata) {
+  addDir(dirPath, stat) {
     const {rootPath} = this
 
     // console.log('add dir', dirPath, 'root', rootPath)
@@ -131,7 +131,7 @@ class Tree extends EventEmitter {
       return
     }
 
-    return this.add(dirPath, createDirectoryNode(dirPath, metadata))
+    return this.add(dirPath, createDirectoryNode(dirPath, stat))
   }
   remove(itemPath) {
     const parentPath = path.dirname(itemPath)
@@ -151,15 +151,13 @@ class Tree extends EventEmitter {
     return item
   }
   setMetadataField(itemPath, field, value) {
-    // let metadata = this.state.ui[itemPath]
-    //
-    // if (! metadata) {
-    //   metadata = this.state.ui[itemPath] = {}
-    // }
-    //
-    // metadata[field] = value
+    let metadata = this.state.metadata[itemPath]
 
-    this.state.ui[itemPath] = value
+    if (! metadata) {
+      metadata = this.state.metadata[itemPath] = {}
+    }
+
+    metadata[field] = value
 
     this.emitChange()
   }

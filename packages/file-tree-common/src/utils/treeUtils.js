@@ -27,7 +27,7 @@ export const sortNodes = (nodes) => {
   })
 }
 
-export const getVisibleNodesByIndex = (root, ui, targetIndex, targetCount) => {
+export const getVisibleNodesByIndex = (root, metadata, targetIndex, targetCount) => {
   let currentIndex = 0
   let currentCount = 0
   const nodes = []
@@ -47,7 +47,7 @@ export const getVisibleNodesByIndex = (root, ui, targetIndex, targetCount) => {
 
     currentIndex++
 
-    if (ui[node.path]) {
+    if (metadata[node.path] && metadata[node.path].expanded) {
       const children = sortNodes(node.children)
       for (var i = 0; i < children.length; i++) {
         getNode(children[i], depth + 1)
@@ -60,13 +60,13 @@ export const getVisibleNodesByIndex = (root, ui, targetIndex, targetCount) => {
   return nodes
 }
 
-export const countVisibleNodes = (node, ui) => {
+export const countVisibleNodes = (node, metadata) => {
   let count = 1
 
-  if (ui[node.path]) {
+  if (metadata[node.path] && metadata[node.path].expanded) {
     const children = node.children
     for (var key in children) {
-      count += countVisibleNodes(children[key], ui)
+      count += countVisibleNodes(children[key], metadata)
     }
   }
 

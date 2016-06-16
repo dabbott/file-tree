@@ -56,25 +56,13 @@ export default class extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    // const {tree: oldTree, metadata: oldUi} = this.props
-    // const {tree: newTree, metadata: newUi} = nextProps
-    //
-    // if (oldTree !== newTree || oldUi !== newUi) {
+    if (nextProps.version !== this.props.version) {
       delete this.indexCache
       delete this.indexOffset
-    //
-      this.setState(this.mapPropsToState(nextProps))
-    // }
-  }
 
-  // shouldComponentUpdate(nextProps, nextState) {
-  //   return true
-  //   // const {tree: oldTree, metadata: oldUi} = this.props
-  //   // const {tree: newTree, metadata: newUi} = nextProps
-  //   //
-  //   // return oldTree !== newTree || oldUi !== newUi
-  //   // return shallowCompare(this, nextProps, nextState)
-  // }
+      this.setState(this.mapPropsToState(nextProps))
+    }
+  }
 
   toggleNode(node) {
     const {metadata} = this.props
@@ -106,14 +94,14 @@ export default class extends Component {
     const {node, depth} = this.indexCache[index - this.indexOffset]
     const {path} = node
 
-    // console.log('node', metadata[path], path)
+    // console.log('render node', metadata[path], path)
 
     return (
       <Node
         key={path}
         node={node}
         depth={depth}
-        expanded={metadata[path]}
+        expanded={metadata[path] && metadata[path].expanded}
         onToggleNode={this.toggleNode}
       />
     )
@@ -123,7 +111,7 @@ export default class extends Component {
     const {tree, version} = this.props
     const {visibleNodes} = this.state
 
-    console.log('rendering tree')
+    // console.log('rendering tree', visibleNodes)
 
     return (
       <div style={styles.container}>
