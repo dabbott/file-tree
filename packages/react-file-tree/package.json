@@ -9,10 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "css-loader": "^0.23.1",
+    "file-tree-common": "*",
     "lodash": "^4.13.1",
     "lodash.memoize": "^4.1.0",
     "react-addons-shallow-compare": "^15.1.0",
     "react-virtualized": "^7.4.0",
-    "file-tree-common": "*"
+    "style-loader": "^0.13.1"
   }
 }

@@ -17,17 +17,18 @@
     "babel-preset-react": "^6.5.0",
     "babel-preset-stage-1": "^6.5.0",
     "css-loader": "^0.23.1",
+    "file-tree-client": "*",
+    "file-tree-client-transport-socket.io": "*",
+    "file-tree-server": "*",
+    "file-tree-server-transport-socket.io": "*",
     "json-loader": "^0.5.4",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
+    "react-file-tree": "*",
     "socket.io": "^1.4.6",
     "socket.io-client": "^1.4.6",
+    "style-loader": "^0.13.1",
     "webpack": "^1.12.9",
-    "webpack-dev-server": "^1.14.0",
-    "file-tree-client": "*",
-    "file-tree-server": "*",
-    "file-tree-client-transport-socket.io": "*",
-    "file-tree-server-transport-socket.io": "*",
-    "react-file-tree": "*"
+    "webpack-dev-server": "^1.14.0"
   }
 }

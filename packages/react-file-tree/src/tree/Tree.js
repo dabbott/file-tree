@@ -1,3 +1,5 @@
+import 'react-virtualized/styles.css'
+
 import React, { Component, PropTypes } from 'react'
 import { AutoSizer, VirtualScroll } from 'react-virtualized'
 import shallowCompare from 'react-addons-shallow-compare'
@@ -32,7 +34,7 @@ export default class extends Component {
   static defaultProps = {
     version: 0,
     tree: null,
-    ui: null,
+    metadata: null,
     onToggleNode: () => {},
   }
 
@@ -46,16 +48,16 @@ export default class extends Component {
   }
 
   mapPropsToState(props) {
-    const {tree, ui} = props
+    const {tree, metadata} = props
 
     return {
-      visibleNodes: countVisibleNodes(tree, ui),
+      visibleNodes: countVisibleNodes(tree, metadata),
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    // const {tree: oldTree, ui: oldUi} = this.props
-    // const {tree: newTree, ui: newUi} = nextProps
+    // const {tree: oldTree, metadata: oldUi} = this.props
+    // const {tree: newTree, metadata: newUi} = nextProps
     //
     // if (oldTree !== newTree || oldUi !== newUi) {
       delete this.indexCache
@@ -67,23 +69,23 @@ export default class extends Component {
 
   // shouldComponentUpdate(nextProps, nextState) {
   //   return true
-  //   // const {tree: oldTree, ui: oldUi} = this.props
-  //   // const {tree: newTree, ui: newUi} = nextProps
+  //   // const {tree: oldTree, metadata: oldUi} = this.props
+  //   // const {tree: newTree, metadata: newUi} = nextProps
   //   //
   //   // return oldTree !== newTree || oldUi !== newUi
   //   // return shallowCompare(this, nextProps, nextState)
   // }
 
   toggleNode(node) {
-    const {ui} = this.props
+    const {metadata} = this.props
     const {path} = node
 
-    // ui[path] ? delete ui[path] : ui[path] = true
-    this.props.onToggleNode(node, ui[path])
+    // metadata[path] ? delete metadata[path] : metadata[path] = true
+    this.props.onToggleNode(node, metadata[path])
   }
 
   renderNode({index}) {
-    const {tree, ui} = this.props
+    const {tree, metadata} = this.props
 
     if (! this.indexCache ||
         ! this.indexCache[index - this.indexOffset]) {
@@ -93,7 +95,7 @@ export default class extends Component {
       this.indexOffset = lowerBound
       this.indexCache = getVisibleNodesByIndex(
         tree,
-        ui,
+        metadata,
         lowerBound,
         upperBound
       )
@@ -104,14 +106,14 @@ export default class extends Component {
     const {node, depth} = this.indexCache[index - this.indexOffset]
     const {path} = node
 
-    // console.log('node', ui[path], path)
+    // console.log('node', metadata[path], path)
 
     return (
       <Node
         key={path}
         node={node}
         depth={depth}
-        expanded={ui[path]}
+        expanded={metadata[path]}
         onToggleNode={this.toggleNode}
       />
     )
@@ -135,7 +137,8 @@ export default class extends Component {
                 rowRenderer={this.renderNode}
                 rowCount={visibleNodes}
                 width={width}
-                // Updates the VirtualScroll when data changes
+                // Updates the VirtualScroll when data changes.
+                // Prop is not actually used.
                 force={version}
               />
             )}

@@ -1,17 +1,27 @@
 
 import EventEmitter from 'events'
+import throttle from 'lodash.throttle'
 
 const nextFrame = typeof window !== 'undefined' ?
   window.requestAnimationFrame.bind(window) :
   process.nextTick.bind(process)
 
 export default class extends EventEmitter {
-  constructor(queue = []) {
+  constructor(wait = 0) {
     super()
 
     this.run = this.run.bind(this)
 
-    this.queue = queue
+    if (wait > 0) {
+      this.enqueue = throttle(this.run, wait, {
+        leading: false,
+        trailing: true,
+      })
+    } else {
+      this.enqueue = () => nextFrame(this.run)
+    }
+
+    this.queue = []
     this.willRun = false
   }
 
@@ -20,7 +30,7 @@ export default class extends EventEmitter {
 
     if (! this.willRun) {
       this.willRun = true
-      nextFrame(this.run)
+      this.enqueue()
     }
   }
 
@@ -43,9 +53,9 @@ export default class extends EventEmitter {
       i++
 
       if (elapsed > 30) {
-        console.log(elapsed, i)
+        console.log('elapsed =>', elapsed, i)
         this.willRun = true
-        nextFrame(this.run)
+        this.enqueue()
         break
       }
     }
