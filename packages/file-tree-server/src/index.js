@@ -42,8 +42,8 @@ module.exports = class extends EventEmitter {
 
     this.transport.on('connection', (socket) => {
       console.log('connection')
-      const {tree: {state}, rootPath} = this
-      socket.send(createAction("initialState", state, rootPath))
+      const {tree, rootPath} = this
+      socket.send(createAction("initialState", tree.toJS(), rootPath))
 
       socket.on('message', (action) => {
         console.log('message', action)
@@ -68,8 +68,8 @@ module.exports = class extends EventEmitter {
     })
 
     this._tree = new Tree(rootPath)
-    this._tree.on('change', (...args) => {
-      const action = createAction('change', ...args)
+    this._tree.on('change', () => {
+      const action = createAction('change', this._tree.toJS())
       this.emit('change', action)
     })
 

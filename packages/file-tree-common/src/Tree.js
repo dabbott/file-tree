@@ -5,7 +5,7 @@ import { split, within } from './utils/pathUtils'
 import { ensureNode, createFileNode, createDirectoryNode } from './utils/treeUtils'
 
 class Tree extends EventEmitter {
-  constructor(rootPath = '/', options = {}) {
+  constructor(rootPath = '/') {
     super()
 
     this.emitChange = this.emitChange.bind(this)
@@ -13,30 +13,39 @@ class Tree extends EventEmitter {
     this.finishTransaction = this.finishTransaction.bind(this)
 
     this.inTransaction = false
-    this.state = {
+    this._state = {
       version: 0,
     }
-    this.options = options
 
     this.set(rootPath)
+  }
+  get state() {
+    const {_state: {stat, metadata, version}} = this
+
+    return {
+      stat,
+      metadata,
+      version,
+      tree: this.get(this.rootPath),
+    }
   }
   set(rootPath, tree, stat, metadata) {
     this.rootPath = rootPath
 
-    const {state} = this
+    const {_state} = this
 
     this.startTransaction()
 
-    if (tree || ! state.tree) {
-      state.tree = tree || ensureNode(rootPath)
+    if (tree || ! _state.tree) {
+      _state.tree = tree || ensureNode(rootPath)
     }
 
-    if (stat || ! state.stat) {
-      state.stat = stat || {}
+    if (stat || ! _state.stat) {
+      _state.stat = stat || {}
     }
 
-    if (metadata || ! state.metadata) {
-      state.metadata = metadata || {}
+    if (metadata || ! _state.metadata) {
+      _state.metadata = metadata || {}
     }
 
     this.finishTransaction()
@@ -46,20 +55,11 @@ class Tree extends EventEmitter {
       return
     }
 
-    const {options, state} = this
+    const {_state} = this
 
-    state.version++
+    _state.version++
 
-    if (options.emitRelative) {
-      const {metadata, stat} = state
-
-      this.emit('change', {
-        ...state,
-        tree: this.get(this.rootPath),
-      })
-    } else {
-      this.emit('change', state)
-    }
+    this.emit('change', this.state)
   }
   startTransaction() {
     if (this.inTransaction) {
@@ -77,7 +77,7 @@ class Tree extends EventEmitter {
     this.emitChange()
   }
   get(filePath) {
-    const {state: {tree}, rootPath} = this
+    const {_state: {tree}, rootPath} = this
 
     const isWithin = within(filePath, rootPath)
 
@@ -151,10 +151,10 @@ class Tree extends EventEmitter {
     return item
   }
   setMetadataField(itemPath, field, value) {
-    let metadata = this.state.metadata[itemPath]
+    let metadata = this._state.metadata[itemPath]
 
     if (! metadata) {
-      metadata = this.state.metadata[itemPath] = {}
+      metadata = this._state.metadata[itemPath] = {}
     }
 
     metadata[field] = value
@@ -168,7 +168,7 @@ class Tree extends EventEmitter {
     this.remove(itemPath)
   }
   toJS() {
-    return this.state
+    return this._state
   }
 }
 

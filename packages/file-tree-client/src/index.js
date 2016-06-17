@@ -31,7 +31,7 @@ module.exports = class extends EventEmitter {
     this.startOperation = this.startOperation.bind(this)
     this.finishOperation = this.finishOperation.bind(this)
 
-    this._tree = new Tree(undefined, { emitRelative: true })
+    this._tree = new Tree()
     this._tree.on('change', this._emitChange)
 
     this._workQueue = new WorkQueue()
