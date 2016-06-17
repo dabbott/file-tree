@@ -14,36 +14,38 @@ export default class Node extends Component {
   constructor() {
     super()
 
+    this.state = {}
+
     this.handleClick = this.handleClick.bind(this)
   }
 
-  shouldComponentUpdate(nextProps, nextState, nextContext) {
-    const shouldUpdate = shallowCompare(this, nextProps, nextState)
+  // shouldComponentUpdate(nextProps, nextState, nextContext) {
+  //   const shouldUpdate = shallowCompare(this, nextProps, nextState)
+  //
+  //   // console.log('update', shouldUpdate, nextProps.node.path)
+  //
+  //   return shouldUpdate
+  // }
 
-    // console.log('update', shouldUpdate, nextProps.node.path)
-
-    return shouldUpdate
-  }
-
-  handleClick() {
-    const {node, onToggleNode} = this.props
-    const {type} = node
-
-    if (isDirectory(type)) {
-      onToggleNode(node)
-    }
+  handleClick(e) {
+    const {node, metadata, onClick} = this.props
+    onClick(e, node, metadata)
   }
 
   render() {
-    const {node, depth, expanded, onToggleNode} = this.props
+    const {node, metadata, depth, onClick} = this.props
     const {type, name, path} = node
+    const {expanded, selected} = metadata
+    const {hover} = this.state
 
     // console.log('rendering', 'expanded', expanded, path, node)
 
     return (
       <div style={styles.nodeContainer}>
-        <div style={getPaddedStyle(depth)}
-          onClick={this.handleClick}>
+        <div style={getPaddedStyle(depth, selected, hover)}
+          onClick={this.handleClick}
+          onMouseEnter={() => this.setState({hover: true})}
+          onMouseLeave={() => this.setState({hover: false})}>
           {isDirectory(type) && (
             <NodeCaret
               expanded={expanded}

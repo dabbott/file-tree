@@ -16,6 +16,10 @@ module.exports = class extends EventEmitter {
     return this._rootPath
   }
 
+  get metadata() {
+    return this._tree.state.metadata
+  }
+
   constructor(transport) {
     super()
 
@@ -24,6 +28,8 @@ module.exports = class extends EventEmitter {
     this._emitEvent = this._emitAction.bind(this, "event")
     this._emitChange = this._emitAction.bind(this, "change")
     this._performAction = this._performAction.bind(this)
+    this.startOperation = this.startOperation.bind(this)
+    this.finishOperation = this.finishOperation.bind(this)
 
     this._tree = new Tree(undefined, { emitRelative: true })
     this._tree.on('change', this._emitChange)
@@ -66,8 +72,23 @@ module.exports = class extends EventEmitter {
     }
   }
 
+  startOperation() {
+    this._tree.startTransaction()
+  }
+
+  finishOperation() {
+    this._tree.finishTransaction()
+  }
+
   updateNodeMetadata(path, field, value) {
     this._tree.setMetadataField(path, field, value)
+  }
+
+  watchPath(path) {
+    this._transport.send({
+      type: 'watchPath',
+      payload: { path },
+    })
   }
 
   _emitAction(type, ...args) {

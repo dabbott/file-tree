@@ -29,30 +29,84 @@ const styles = {
   }
 }
 
+const PLUGINS = {
+  expand: {
+    onClick: function (e, node, nodeMetadata, fileTree) {
+      const {type, path} = node
+      const {expanded} = nodeMetadata
+
+      if (type === 'directory') {
+        const next = ! expanded
+
+        fileTree.updateNodeMetadata(path, 'expanded', next)
+
+        if (next) {
+          fileTree.watchPath(path)
+        }
+
+        this.props.onExpand && this.props.onExpand.call(this, e, node, nodeMetadata, fileTree)
+      }
+    },
+  },
+  select: {
+    onClick: function (e, node, nodeMetadata, fileTree) {
+      const {type, path} = node
+      const {selected} = nodeMetadata
+      const {metadata} = fileTree
+
+      if (! selected) {
+        for (let key in metadata) {
+          if (metadata[key] && metadata[key].selected) {
+            fileTree.updateNodeMetadata(key, 'selected', false)
+          }
+        }
+
+        fileTree.updateNodeMetadata(path, 'selected', true)
+
+        this.props.onSelect && this.props.onSelect.call(this, e, node, nodeMetadata, fileTree)
+      }
+    },
+  },
+}
+
 export default class extends Component {
 
   static defaultProps = {
     version: 0,
     tree: null,
     metadata: null,
-    onToggleNode: () => {},
+    plugins: [],
+    onClick: () => {},
+    onOperationStart: () => {},
+    onOperationFinish: () => {},
   }
 
   constructor(props) {
     super()
 
-    this.toggleNode = this.toggleNode.bind(this)
+    this.handleClick = this.handleClick.bind(this)
     this.renderNode = this.renderNode.bind(this)
 
     this.state = this.mapPropsToState(props)
   }
 
   mapPropsToState(props) {
-    const {tree, metadata} = props
+    const {tree, metadata, plugins} = props
 
     return {
       visibleNodes: countVisibleNodes(tree, metadata),
+      plugins: this.resolvePlugins(plugins),
     }
+  }
+
+  resolvePlugins(plugins) {
+    return plugins.map(plugin => {
+      if (typeof plugin === 'string') {
+        return PLUGINS[plugin]
+      }
+
+      return plugin
+    })
   }
 
   componentWillReceiveProps(nextProps) {
@@ -64,12 +118,21 @@ export default class extends Component {
     }
   }
 
-  toggleNode(node) {
-    const {metadata} = this.props
-    const {path} = node
+  runInOperation(f) {
+    this.props.onOperationStart()
+    console.log('running operation')
+    f()
+    this.props.onOperationFinish()
+  }
 
-    // metadata[path] ? delete metadata[path] : metadata[path] = true
-    this.props.onToggleNode(node, metadata[path])
+  handleClick(e, node, metadata) {
+    const {plugins} = this.state
+    const {controller} = this.props
+
+    this.runInOperation(() => {
+      plugins.forEach(plugin => plugin.onClick && plugin.onClick.call(this, e, node, metadata, controller))
+      this.props.onClick.call(this, e, node, metadata, controller)
+    })
   }
 
   renderNode({index}) {
@@ -100,15 +163,15 @@ export default class extends Component {
       <Node
         key={path}
         node={node}
+        metadata={metadata[path] || {}}
         depth={depth}
-        expanded={metadata[path] && metadata[path].expanded}
-        onToggleNode={this.toggleNode}
+        onClick={this.handleClick}
       />
     )
   }
 
   render() {
-    const {tree, version} = this.props
+    const {version} = this.props
     const {visibleNodes} = this.state
 
     // console.log('rendering tree', visibleNodes)

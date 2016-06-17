@@ -15,21 +15,16 @@ fileTree.on('change', ({payload: {tree, metadata, version}}) => {
 
   ReactDOM.render(
     <FileTree
+      controller={fileTree}
       version={version}
       tree={tree}
       metadata={metadata}
-      onToggleNode={({path}) => {
-        console.log('toogled')
-        const next = metadata[path] ? (! metadata[path].expanded) : true
-        fileTree.updateNodeMetadata(path, 'expanded', next)
-        // if (! metadata[path]) {
-        console.log('emitting')
-          socket.send({
-            type: 'watchPath',
-            payload: { path },
-          })
-        // }
-      }}
+      onOperationStart={fileTree.startOperation}
+      onOperationFinish={fileTree.finishOperation}
+      plugins={['expand', 'select']}
+      onClick={(e, node, metadata, controller) => console.log('clicked', node.path)}
+      onExpand={(e, node, metadata, controller) => console.log('expanded', node.path)}
+      onSelect={(e, node, metadata, controller) => console.log('select', node.path)}
     />,
     mountNode
   )
