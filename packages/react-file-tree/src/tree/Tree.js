@@ -31,7 +31,7 @@ const styles = {
 
 const PLUGINS = {
   expand: {
-    onClick: function (e, node, nodeMetadata, fileTree) {
+    onClick: function (pluginOptions, e, node, nodeMetadata, fileTree) {
       const {type, path} = node
       const {expanded} = nodeMetadata
 
@@ -49,12 +49,14 @@ const PLUGINS = {
     },
   },
   select: {
-    onClick: function (e, node, nodeMetadata, fileTree) {
+    onClick: function (pluginOptions, e, node, nodeMetadata, fileTree) {
       const {type, path} = node
       const {selected} = nodeMetadata
       const {metadata} = fileTree
 
-      if (! selected) {
+      if (e.metaKey && pluginOptions.multiple !== false) {
+        fileTree.updateNodeMetadata(path, 'selected', ! selected)
+      } else if (! selected) {
         for (let key in metadata) {
           if (metadata[key] && metadata[key].selected) {
             fileTree.updateNodeMetadata(key, 'selected', false)
@@ -101,8 +103,12 @@ export default class extends Component {
 
   resolvePlugins(plugins) {
     return plugins.map(plugin => {
-      if (typeof plugin === 'string') {
-        return PLUGINS[plugin]
+      if (! Array.isArray(plugin)) {
+        plugin = [plugin, {}]
+      }
+
+      if (typeof plugin[0] === 'string') {
+        return [PLUGINS[plugin[0]], plugin[1] || {}]
       }
 
       return plugin
@@ -130,7 +136,7 @@ export default class extends Component {
     const {controller} = this.props
 
     this.runInOperation(() => {
-      plugins.forEach(plugin => plugin.onClick && plugin.onClick.call(this, e, node, metadata, controller))
+      plugins.forEach(([plugin, options]) => plugin.onClick && plugin.onClick.call(this, options, e, node, metadata, controller))
       this.props.onClick.call(this, e, node, metadata, controller)
     })
   }

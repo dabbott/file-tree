@@ -21,7 +21,10 @@ fileTree.on('change', ({payload: {tree, metadata, version}}) => {
       metadata={metadata}
       onOperationStart={fileTree.startOperation}
       onOperationFinish={fileTree.finishOperation}
-      plugins={['expand', 'select']}
+      plugins={[
+        'expand',
+        'select',
+      ]}
       onClick={(e, node, metadata, controller) => console.log('clicked', node.path)}
       onExpand={(e, node, metadata, controller) => console.log('expanded', node.path)}
       onSelect={(e, node, metadata, controller) => console.log('select', node.path)}
