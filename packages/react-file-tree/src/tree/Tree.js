@@ -29,43 +29,119 @@ const styles = {
   }
 }
 
+const selectNode = function(e, node, nodeMetadata, index) {
+  const {controller} = this.props
+  const {path} = node
+  const {metadata} = controller
+
+  // Disable all existing selections
+  for (let key in metadata) {
+    if (metadata[key] && metadata[key].selected) {
+      controller.updateNodeMetadata(key, 'selected', false)
+    }
+  }
+
+  controller.updateNodeMetadata(path, 'selected', true)
+
+  this.props.onSelect && this.props.onSelect.call(this, e, node, nodeMetadata, index)
+}
+
+const getSelectionInfo = (tree, metadata) => {
+  const nodeInfo = getVisibleNodesByIndex(tree, metadata, 0, Infinity)
+  let selectedIndex = 0
+  while (selectedIndex < nodeInfo.length) {
+    const {path} = nodeInfo[selectedIndex].node
+    if (metadata[path] && metadata[path].selected) {
+      break
+    }
+    selectedIndex++
+  }
+
+  return {
+    nodes: nodeInfo.map(({node}) => node),
+    selectedIndex,
+  }
+}
+
 const PLUGINS = {
   expand: {
-    onClick: function (pluginOptions, e, node, nodeMetadata, fileTree) {
+    onClick: function (pluginOptions, e, node, nodeMetadata, index) {
+      const {controller} = this.props
       const {type, path} = node
       const {expanded} = nodeMetadata
 
       if (type === 'directory') {
         const next = ! expanded
 
-        fileTree.updateNodeMetadata(path, 'expanded', next)
+        controller.updateNodeMetadata(path, 'expanded', next)
 
         if (next) {
-          fileTree.watchPath(path)
+          controller.watchPath(path)
         }
 
-        this.props.onExpand && this.props.onExpand.call(this, e, node, nodeMetadata, fileTree)
+        this.props.onExpand && this.props.onExpand.call(this, e, node, nodeMetadata, index)
       }
     },
   },
   select: {
-    onClick: function (pluginOptions, e, node, nodeMetadata, fileTree) {
+    onClick: function (pluginOptions, e, node, nodeMetadata, index) {
+      const {controller} = this.props
       const {type, path} = node
       const {selected} = nodeMetadata
-      const {metadata} = fileTree
+      const {tree, metadata} = this.state
 
       if (e.metaKey && pluginOptions.multiple !== false) {
-        fileTree.updateNodeMetadata(path, 'selected', ! selected)
-      } else if (! selected) {
-        for (let key in metadata) {
-          if (metadata[key] && metadata[key].selected) {
-            fileTree.updateNodeMetadata(key, 'selected', false)
-          }
+        controller.updateNodeMetadata(path, 'selected', ! selected)
+        if (! selected) {
+          this.props.onSelect && this.props.onSelect.call(this, e, node, nodeMetadata, index)
         }
+      } else if (e.shiftKey && pluginOptions.multiple !== false) {
+        // const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
+        // const range = selectedIndex > index ? [index, selectedIndex] : [selectedIndex, index]
+        //
+        // console.log('selecting', index, '<==>', selectedIndex, range)
+        //
+        // for (let i = range[0]; i <= range[1]; i++) {
+        //   const currentNode = nodes[i]
+        //   const currentMetadata = metadata[currentNode.path] || {}
+        //   const currentSelected = currentMetadata.selected
+        //   controller.updateNodeMetadata(currentNode.path, 'selected', true)
+        //   if (! currentSelected) {
+        //     this.props.onSelect && this.props.onSelect.call(this, e, currentNode, currentMetadata, i)
+        //   }
+        // }
+      } else if (! selected) {
+        selectNode.call(this, e, node, nodeMetadata, index)
+      }
+    },
+  },
+  keyboard: {
+    onKeyDown: function (pluginOptions, e, node, nodeMetadata, index) {
+      const {controller} = this.props
+      const {tree, metadata} = this.state
+      const {selected} = nodeMetadata
 
-        fileTree.updateNodeMetadata(path, 'selected', true)
-
-        this.props.onSelect && this.props.onSelect.call(this, e, node, nodeMetadata, fileTree)
+      switch (e.which) {
+        // up
+        case 38: {
+          const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
+          if (selectedIndex > 0) {
+            e.preventDefault()
+            const nextNode = nodes[selectedIndex - 1]
+            selectNode.call(this, e, nextNode, metadata[nextNode.path] || {}, selectedIndex - 1)
+          }
+          break
+        }
+        // down
+        case 40: {
+          const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
+          if (selectedIndex < nodes.length - 1) {
+            e.preventDefault()
+            const nextNode = nodes[selectedIndex + 1]
+            selectNode.call(this, e, nextNode, metadata[nextNode.path] || {}, selectedIndex + 1)
+          }
+          break
+        }
       }
     },
   },
@@ -74,28 +150,28 @@ const PLUGINS = {
 export default class extends Component {
 
   static defaultProps = {
-    version: 0,
-    tree: null,
-    metadata: null,
     plugins: [],
-    onClick: () => {},
-    onOperationStart: () => {},
-    onOperationFinish: () => {},
   }
 
   constructor(props) {
     super()
 
-    this.handleClick = this.handleClick.bind(this)
+    this.handleClick = this.handleEvent.bind(this, 'onClick')
+    this.handleKeyUp = this.handleEvent.bind(this, 'onKeyUp')
+    this.handleKeyDown = this.handleEvent.bind(this, 'onKeyDown')
     this.renderNode = this.renderNode.bind(this)
 
     this.state = this.mapPropsToState(props)
   }
 
   mapPropsToState(props) {
-    const {tree, metadata, plugins} = props
+    const {controller, plugins} = props
+    const {tree, metadata, version} = controller.tree.state
 
     return {
+      version,
+      tree,
+      metadata,
       visibleNodes: countVisibleNodes(tree, metadata),
       plugins: this.resolvePlugins(plugins),
     }
@@ -116,7 +192,7 @@ export default class extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.version !== this.props.version) {
+    if (nextProps.controller.version !== this.state.version) {
       delete this.indexCache
       delete this.indexOffset
 
@@ -125,36 +201,48 @@ export default class extends Component {
   }
 
   runInOperation(f) {
-    this.props.onOperationStart()
-    console.log('running operation')
+    this.props.controller.startOperation()
     f()
-    this.props.onOperationFinish()
+    this.props.controller.finishOperation()
   }
 
-  handleClick(e, node, metadata) {
+  handleEvent(eventName, e, node, metadata, index) {
     const {plugins} = this.state
     const {controller} = this.props
 
     this.runInOperation(() => {
-      plugins.forEach(([plugin, options]) => plugin.onClick && plugin.onClick.call(this, options, e, node, metadata, controller))
-      this.props.onClick.call(this, e, node, metadata, controller)
+      plugins.forEach(([plugin, options]) => {
+        plugin[eventName] && plugin[eventName].call(this,
+          options,
+          e,
+          node,
+          metadata,
+          index
+        )
+      })
+      this.props[eventName] && this.props[eventName].call(this,
+        e,
+        node,
+        metadata,
+        index
+      )
     })
   }
 
   renderNode({index}) {
-    const {tree, metadata} = this.props
+    const {tree, metadata} = this.state
 
     if (! this.indexCache ||
         ! this.indexCache[index - this.indexOffset]) {
       const lowerBound = Math.max(0, index - 20)
-      const upperBound = index + 40
+      const count = 40
 
       this.indexOffset = lowerBound
       this.indexCache = getVisibleNodesByIndex(
         tree,
         metadata,
         lowerBound,
-        upperBound
+        count
       )
 
       // console.log('cached', lowerBound, '<-->', upperBound)
@@ -163,7 +251,7 @@ export default class extends Component {
     const {node, depth} = this.indexCache[index - this.indexOffset]
     const {path} = node
 
-    // console.log('render node', metadata[path], path)
+    // console.log('render node', path, tree, metadata)
 
     return (
       <Node
@@ -171,14 +259,16 @@ export default class extends Component {
         node={node}
         metadata={metadata[path] || {}}
         depth={depth}
+        index={index}
         onClick={this.handleClick}
+        onKeyUp={this.handleKeyUp}
+        onKeyDown={this.handleKeyDown}
       />
     )
   }
 
   render() {
-    const {version} = this.props
-    const {visibleNodes} = this.state
+    const {visibleNodes, version} = this.state
 
     // console.log('rendering tree', visibleNodes)
 

@@ -6,6 +6,7 @@ const styles = {
     justifyContent: 'flex-start',
     alignItems: 'stretch',
     backgroundColor: 'rgba(0,0,0,0.1)',
+    outline: 'none',
   },
   nodeContent: {
     flex: '0',

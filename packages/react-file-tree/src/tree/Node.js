@@ -16,7 +16,9 @@ export default class Node extends Component {
 
     this.state = {}
 
-    this.handleClick = this.handleClick.bind(this)
+    this.handleClick = this.handleEvent.bind(this, 'onClick')
+    this.handleKeyUp = this.handleEvent.bind(this, 'onKeyUp')
+    this.handleKeyDown = this.handleEvent.bind(this, 'onKeyDown')
   }
 
   // shouldComponentUpdate(nextProps, nextState, nextContext) {
@@ -27,13 +29,13 @@ export default class Node extends Component {
   //   return shouldUpdate
   // }
 
-  handleClick(e) {
-    const {node, metadata, onClick} = this.props
-    onClick(e, node, metadata)
+  handleEvent(eventName, e) {
+    const {node, metadata, index} = this.props
+    this.props[eventName](e, node, metadata, index)
   }
 
   render() {
-    const {node, metadata, depth, onClick} = this.props
+    const {node, metadata, depth} = this.props
     const {type, name, path} = node
     const {expanded, selected} = metadata
     const {hover} = this.state
@@ -41,11 +43,15 @@ export default class Node extends Component {
     // console.log('rendering', 'expanded', expanded, path, node)
 
     return (
-      <div style={styles.nodeContainer}>
-        <div style={getPaddedStyle(depth, selected, hover)}
-          onClick={this.handleClick}
-          onMouseEnter={() => this.setState({hover: true})}
-          onMouseLeave={() => this.setState({hover: false})}>
+      <div style={styles.nodeContainer}
+        tabIndex={'0'}
+        onClick={this.handleClick}
+        onKeyUp={this.handleKeyUp}
+        onKeyDown={this.handleKeyDown}
+        onMouseEnter={() => this.setState({hover: true})}
+        onMouseLeave={() => this.setState({hover: false})}
+      >
+        <div style={getPaddedStyle(depth, selected, hover)}>
           {isDirectory(type) && (
             <NodeCaret
               expanded={expanded}
