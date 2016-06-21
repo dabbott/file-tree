@@ -70,7 +70,8 @@ const PLUGINS = {
       const {type, path} = node
       const {expanded} = nodeMetadata
 
-      if (type === 'directory') {
+      // Only expand directories if no meta or shift key is pressed
+      if (type === 'directory' && ! e.metaKey && ! e.shiftKey) {
         const next = ! expanded
 
         controller.updateNodeMetadata(path, 'expanded', next)
@@ -96,21 +97,21 @@ const PLUGINS = {
           this.props.onSelect && this.props.onSelect.call(this, e, node, nodeMetadata, index)
         }
       } else if (e.shiftKey && pluginOptions.multiple !== false) {
-        // const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
-        // const range = selectedIndex > index ? [index, selectedIndex] : [selectedIndex, index]
-        //
+        const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
+        const range = selectedIndex > index ? [index, selectedIndex] : [selectedIndex, index]
+
         // console.log('selecting', index, '<==>', selectedIndex, range)
-        //
-        // for (let i = range[0]; i <= range[1]; i++) {
-        //   const currentNode = nodes[i]
-        //   const currentMetadata = metadata[currentNode.path] || {}
-        //   const currentSelected = currentMetadata.selected
-        //   controller.updateNodeMetadata(currentNode.path, 'selected', true)
-        //   if (! currentSelected) {
-        //     this.props.onSelect && this.props.onSelect.call(this, e, currentNode, currentMetadata, i)
-        //   }
-        // }
-      } else if (! selected) {
+
+        for (let i = range[0]; i <= range[1]; i++) {
+          const currentNode = nodes[i]
+          const currentMetadata = metadata[currentNode.path] || {}
+          const currentSelected = currentMetadata.selected
+          controller.updateNodeMetadata(currentNode.path, 'selected', true)
+          if (! currentSelected) {
+            this.props.onSelect && this.props.onSelect.call(this, e, currentNode, currentMetadata, i)
+          }
+        }
+      } else {
         selectNode.call(this, e, node, nodeMetadata, index)
       }
     },
@@ -202,7 +203,12 @@ export default class extends Component {
 
   runInOperation(f) {
     this.props.controller.startOperation()
-    f()
+    try {
+      f()
+    } catch (e) {
+      console.error('file-tree-client operation failed.')
+      console.error(e)
+    }
     this.props.controller.finishOperation()
   }
 
