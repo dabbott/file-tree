@@ -172,7 +172,17 @@ const PLUGINS = {
       if (type === 'directory') [
         actions.push(['Create file', () => {
           this.setState({overlay: null})
-          const newPath = nodePath.join(path, 'test.txt')
+          const newFileName = prompt('Enter a name for the new file')
+          const newPath = nodePath.join(path, newFileName)
+
+          if (! newPath) {
+            return
+          }
+
+          if (! confirm(`Write ${newPath}?`)) {
+            return
+          }
+
           console.log('newPath', newPath)
           controller.run('writeFile', newPath, '').then((info) => {
             console.log('wrote file', info)

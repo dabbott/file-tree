@@ -71,6 +71,7 @@ module.exports = class extends EventEmitter {
                   meta: { id },
                   payload: err,
                 })
+                socket.send(createAction("initialState", tree.toJS(), rootPath))
               } else {
                 socket.send({
                   type: 'response',

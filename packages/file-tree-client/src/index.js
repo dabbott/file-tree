@@ -56,6 +56,7 @@ module.exports = class extends EventEmitter {
 
     switch (type) {
       case 'initialState': {
+        console.log('loading initial tree', tree)
         const {rootPath, state: {tree, stat}} = payload
         this.tree.set(rootPath, tree, stat)
         break
@@ -100,6 +101,14 @@ module.exports = class extends EventEmitter {
 
   run(methodName, ...args) {
     const id = getId()
+
+    switch (methodName) {
+      case 'writeFile': {
+        const [filename] = args
+        this._tree.addFile(filename, { loading: true })
+        break
+      }
+    }
 
     this._transport.send({
       type: 'request',
