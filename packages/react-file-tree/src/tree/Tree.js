@@ -168,15 +168,19 @@ const PLUGINS = {
 
       const actions = []
 
-      // if (type === 'directory') [
-      //   actions.push(['Create file', () => {
-      //     controller.run('writeFile', nodePath.join(path, 'test.txt'), '').then((info) => {
-      //       console.log('wrote file', info)
-      //     }).catch((e) => {
-      //       console.log('failed to write file', e)
-      //     })
-      //   }])
-      // ]
+      console.log('type', type)
+      if (type === 'directory') [
+        actions.push(['Create file', () => {
+          this.setState({overlay: null})
+          const newPath = nodePath.join(path, 'test.txt')
+          console.log('newPath', newPath)
+          controller.run('writeFile', newPath, '').then((info) => {
+            console.log('wrote file', info)
+          }).catch((e) => {
+            console.log('failed to write file', e)
+          })
+        }])
+      ]
 
       const style = {
         position: 'absolute',

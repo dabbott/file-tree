@@ -83,7 +83,7 @@ export const ensureNode = (dirPath, state) => {
   let currentPath = root
   while (parts.length) {
     const part = parts[0]
-    const currentPath = path.join(root, part)
+    currentPath = path.join(currentPath, part)
     lastPart = lastPart.children[part] = createDirectoryNode(currentPath)
     parts.shift()
   }

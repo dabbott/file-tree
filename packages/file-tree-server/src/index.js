@@ -1,5 +1,6 @@
 import EventEmitter from 'events'
 import chokidar from 'chokidar'
+import fs from 'fs-extra'
 
 import { Tree, WorkQueue, chokidarAdapter, createAction } from 'file-tree-common'
 
@@ -47,13 +48,38 @@ module.exports = class extends EventEmitter {
 
       socket.on('message', (action) => {
         console.log('message', action)
-        const {type, payload} = action
+        const {type, payload, meta} = action
 
         switch (type) {
           case 'watchPath': {
             const {path} = payload
             this.watcher.add(path + '/')
             console.log('watching path', path)
+            break
+          }
+          case 'request': {
+            const {methodName, args} = payload
+            const {id} = meta
+            // console.log('performing', methodName, args)
+            const callback = (err, data) => {
+              console.log('done', methodName, id, err, data)
+
+              if (err) {
+                socket.send({
+                  type: 'response',
+                  error: true,
+                  meta: { id },
+                  payload: err,
+                })
+              } else {
+                socket.send({
+                  type: 'response',
+                  meta: { id },
+                  payload: data,
+                })
+              }
+            }
+            fs[methodName](...args, callback)
             break
           }
         }

@@ -2,6 +2,9 @@ import EventEmitter from 'events'
 
 import { Tree, WorkQueue, createAction, chokidarAdapter } from 'file-tree-common'
 
+let initialId = 0
+const getId = () => ++initialId
+
 module.exports = class extends EventEmitter {
 
   get tree() {
@@ -31,6 +34,8 @@ module.exports = class extends EventEmitter {
     this.startOperation = this.startOperation.bind(this)
     this.finishOperation = this.finishOperation.bind(this)
 
+    this._requestMap = {}
+
     this._tree = new Tree()
     this._tree.on('change', this._emitChange)
 
@@ -47,7 +52,7 @@ module.exports = class extends EventEmitter {
   }
 
   _performAction(action) {
-    const {type, payload} = action
+    const {type, payload, error, meta} = action
 
     switch (type) {
       case 'initialState': {
@@ -69,6 +74,15 @@ module.exports = class extends EventEmitter {
         this._workQueue.push(task)
         break
       }
+      case 'response': {
+        const {id} = meta
+        if (error) {
+          this._requestMap[id].reject(payload)
+        } else {
+          this._requestMap[id].resolve(payload)
+        }
+        break
+      }
     }
   }
 
@@ -82,6 +96,23 @@ module.exports = class extends EventEmitter {
 
   updateNodeMetadata(path, field, value) {
     this._tree.setMetadataField(path, field, value)
+  }
+
+  run(methodName, ...args) {
+    const id = getId()
+
+    this._transport.send({
+      type: 'request',
+      meta: { id },
+      payload: {
+        methodName,
+        args,
+      },
+    })
+
+    return new Promise((resolve, reject) => {
+      this._requestMap[id] = {resolve, reject}
+    })
   }
 
   watchPath(path) {
