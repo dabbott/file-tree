@@ -3,8 +3,9 @@ import 'react-virtualized/styles.css'
 import React, { Component, PropTypes } from 'react'
 import { AutoSizer, VirtualScroll } from 'react-virtualized'
 import shallowCompare from 'react-addons-shallow-compare'
+import nodePath from 'path'
 
-import Node from './Node'
+import DefaultNode from './Node'
 import { treeUtils } from 'file-tree-common'
 const { getVisibleNodesByIndex, countVisibleNodes } = treeUtils
 
@@ -15,18 +16,28 @@ const styles = {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'stretch',
-    backgroundColor: '#3B3738',
     minHeight: 0,
     minWidth: 0,
     overflow: 'hidden',
     flexWrap: 'no-wrap',
+    position: 'relative',
   },
   autoSizerWrapper: {
     flex: '1 1 auto',
     minHeight: 0,
     minWidth: 0,
     overflow: 'hidden',
-  }
+  },
+  node: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    outline: 'none',
+  },
 }
 
 const selectNode = function(e, node, nodeMetadata, index) {
@@ -146,12 +157,62 @@ const PLUGINS = {
       }
     },
   },
+  actionsheet: {
+    onContextMenu: function (pluginOptions, e, node, nodeMetadata, index) {
+      e.preventDefault()
+
+      const {controller} = this.props
+      const {tree, metadata} = this.state
+      const {type, path} = node
+      const {selected} = nodeMetadata
+
+      const actions = []
+
+      // if (type === 'directory') [
+      //   actions.push(['Create file', () => {
+      //     controller.run('writeFile', nodePath.join(path, 'test.txt'), '').then((info) => {
+      //       console.log('wrote file', info)
+      //     }).catch((e) => {
+      //       console.log('failed to write file', e)
+      //     })
+      //   }])
+      // ]
+
+      const style = {
+        position: 'absolute',
+        top: 40,
+        left: 40,
+        right: 40,
+        zIndex: 1000,
+        borderRadius: 10,
+        backgroundColor: 'white',
+        border: '1px solid black',
+      }
+
+      const overlay = (
+        <div style={style}>
+          {actions.map(([name, f]) => {
+            return (
+              <div
+                key={name}
+                onClick={f}
+              >{name}</div>
+            )
+          })}
+        </div>
+      )
+
+      this.setState({overlay})
+    }
+  }
 }
 
 export default class extends Component {
 
   static defaultProps = {
     plugins: [],
+    nodeHeight: 40,
+    NodeComponent: DefaultNode,
   }
 
   constructor(props) {
@@ -160,6 +221,7 @@ export default class extends Component {
     this.handleClick = this.handleEvent.bind(this, 'onClick')
     this.handleKeyUp = this.handleEvent.bind(this, 'onKeyUp')
     this.handleKeyDown = this.handleEvent.bind(this, 'onKeyDown')
+    this.handleContextMenu = this.handleEvent.bind(this, 'onContextMenu')
     this.renderNode = this.renderNode.bind(this)
 
     this.state = this.mapPropsToState(props)
@@ -174,11 +236,11 @@ export default class extends Component {
       tree,
       metadata,
       visibleNodes: countVisibleNodes(tree, metadata),
-      plugins: this.resolvePlugins(plugins),
+      plugins: this.normalizePlugins(plugins),
     }
   }
 
-  resolvePlugins(plugins) {
+  normalizePlugins(plugins) {
     return plugins.map(plugin => {
       if (! Array.isArray(plugin)) {
         plugin = [plugin, {}]
@@ -212,7 +274,7 @@ export default class extends Component {
     this.props.controller.finishOperation()
   }
 
-  handleEvent(eventName, e, node, metadata, index) {
+  handleEvent(eventName, node, metadata, index, e) {
     const {plugins} = this.state
     const {controller} = this.props
 
@@ -236,6 +298,7 @@ export default class extends Component {
   }
 
   renderNode({index}) {
+    const {NodeComponent} = this.props
     const {tree, metadata} = this.state
 
     if (! this.indexCache ||
@@ -256,25 +319,32 @@ export default class extends Component {
 
     const {node, depth} = this.indexCache[index - this.indexOffset]
     const {path} = node
+    const nodeMetadata = metadata[path] || {}
 
     // console.log('render node', path, tree, metadata)
 
     return (
-      <Node
-        key={path}
-        node={node}
-        metadata={metadata[path] || {}}
-        depth={depth}
-        index={index}
-        onClick={this.handleClick}
-        onKeyUp={this.handleKeyUp}
-        onKeyDown={this.handleKeyDown}
-      />
+      <div style={styles.node}
+        tabIndex={'0'}
+        onClick={this.handleClick.bind(this, node, nodeMetadata, index)}
+        onKeyUp={this.handleKeyUp.bind(this, node, nodeMetadata, index)}
+        onKeyDown={this.handleKeyDown.bind(this, node, nodeMetadata, index)}
+        onContextMenu={this.handleContextMenu.bind(this, node, nodeMetadata, index)}
+      >
+        <NodeComponent
+          key={path}
+          node={node}
+          metadata={nodeMetadata}
+          depth={depth}
+          index={index}
+        />
+      </div>
     )
   }
 
   render() {
-    const {visibleNodes, version} = this.state
+    const {nodeHeight} = this.props
+    const {visibleNodes, version, overlay} = this.state
 
     // console.log('rendering tree', visibleNodes)
 
@@ -286,7 +356,7 @@ export default class extends Component {
               <VirtualScroll
                 height={height}
                 overscanRowCount={3}
-                rowHeight={40}
+                rowHeight={nodeHeight}
                 rowRenderer={this.renderNode}
                 rowCount={visibleNodes}
                 width={width}
@@ -297,6 +367,7 @@ export default class extends Component {
             )}
           </AutoSizer>
         </div>
+        {overlay}
       </div>
     )
   }

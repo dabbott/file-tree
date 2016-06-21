@@ -9,7 +9,7 @@ const styles = {
     outline: 'none',
   },
   nodeContent: {
-    flex: '0',
+    flex: '1 1 auto',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'flex-start',

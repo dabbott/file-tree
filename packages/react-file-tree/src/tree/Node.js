@@ -15,10 +15,6 @@ export default class Node extends Component {
     super()
 
     this.state = {}
-
-    this.handleClick = this.handleEvent.bind(this, 'onClick')
-    this.handleKeyUp = this.handleEvent.bind(this, 'onKeyUp')
-    this.handleKeyDown = this.handleEvent.bind(this, 'onKeyDown')
   }
 
   // shouldComponentUpdate(nextProps, nextState, nextContext) {
@@ -29,36 +25,23 @@ export default class Node extends Component {
   //   return shouldUpdate
   // }
 
-  handleEvent(eventName, e) {
-    const {node, metadata, index} = this.props
-    this.props[eventName](e, node, metadata, index)
-  }
-
   render() {
     const {node, metadata, depth} = this.props
     const {type, name, path} = node
     const {expanded, selected} = metadata
     const {hover} = this.state
 
-    // console.log('rendering', 'expanded', expanded, path, node)
-
     return (
-      <div style={styles.nodeContainer}
-        tabIndex={'0'}
-        onClick={this.handleClick}
-        onKeyUp={this.handleKeyUp}
-        onKeyDown={this.handleKeyDown}
+      <div style={getPaddedStyle(depth, selected, hover)}
         onMouseEnter={() => this.setState({hover: true})}
         onMouseLeave={() => this.setState({hover: false})}
       >
-        <div style={getPaddedStyle(depth, selected, hover)}>
-          {isDirectory(type) && (
-            <NodeCaret
-              expanded={expanded}
-            />
-          )}
-          <div style={styles.nodeText}>{name}</div>
-        </div>
+        {isDirectory(type) && (
+          <NodeCaret
+            expanded={expanded}
+          />
+        )}
+        <div style={styles.nodeText}>{name}</div>
       </div>
     )
   }
