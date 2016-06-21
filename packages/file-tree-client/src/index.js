@@ -100,12 +100,44 @@ module.exports = class extends EventEmitter {
   }
 
   run(methodName, ...args) {
+    const {tree} = this
     const id = getId()
 
     switch (methodName) {
       case 'writeFile': {
-        const [filename] = args
-        this._tree.addFile(filename, { loading: true })
+        const [filePath] = args
+        tree.addFile(filePath, { loading: true })
+        break
+      }
+      case 'mkdir': {
+        const [filePath] = args
+        tree.addDir(filePath, { loading: true })
+        break
+      }
+      case 'move': {
+        const [oldPath, newPath] = args
+        const node = tree.get(oldPath)
+        if (node) {
+          if (node.type === 'directory') {
+            tree.removeDir(oldPath)
+            tree.addDir(newPath, { loading: true })
+          } else {
+            tree.removeFile(oldPath)
+            tree.addFile(newPath, { loading: true })
+          }
+        }
+        break
+      }
+      case 'remove': {
+        const [filePath] = args
+        const node = tree.get(filePath)
+        if (node) {
+          if (node.type === 'directory') {
+            tree.removeDir(filePath)
+          } else {
+            tree.removeFile(filePath)
+          }
+        }
         break
       }
     }

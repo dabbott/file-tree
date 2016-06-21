@@ -163,51 +163,83 @@ const PLUGINS = {
 
       const {controller} = this.props
       const {tree, metadata} = this.state
-      const {type, path} = node
+      const {type, path, name} = node
       const {selected} = nodeMetadata
 
       const actions = []
 
-      console.log('type', type)
-      if (type === 'directory') [
+      if (type === 'directory') {
         actions.push(['Create file', () => {
           this.setState({overlay: null})
+
           const newFileName = prompt('Enter a name for the new file')
+          if (! newFileName) { return }
+
           const newPath = nodePath.join(path, newFileName)
+          if (! confirm(`Write ${newPath}?`)) { return}
 
-          if (! newPath) {
-            return
-          }
-
-          if (! confirm(`Write ${newPath}?`)) {
-            return
-          }
-
-          console.log('newPath', newPath)
-          controller.run('writeFile', newPath, '').then((info) => {
-            console.log('wrote file', info)
-          }).catch((e) => {
-            console.log('failed to write file', e)
-          })
+          controller.run('writeFile', newPath, '')
         }])
-      ]
+
+        actions.push(['Create directory', () => {
+          this.setState({overlay: null})
+
+          const newFileName = prompt('Enter a name for the new directory')
+          if (! newFileName) { return }
+
+          const newPath = nodePath.join(path, newFileName)
+          if (! confirm(`Write ${newPath}?`)) { return}
+
+          controller.run('mkdir', newPath)
+        }])
+      }
+
+      actions.push([`Rename ${name}`, () => {
+        this.setState({overlay: null})
+
+        const newFileName = prompt(`Enter a new name for the ${type}`)
+        if (! newFileName) { return }
+
+        const newPath = nodePath.join(nodePath.dirname(path), newFileName)
+        if (! confirm(`Rename to ${newPath}?`)) { return}
+
+        controller.run('move', path, newPath)
+      }])
+
+      actions.push([`Delete ${name}`, () => {
+        this.setState({overlay: null})
+
+        if (! confirm(`Are you sure you want to delete ${path}?`)) { return}
+
+        controller.run('remove', path)
+      }])
 
       const style = {
         position: 'absolute',
-        top: 40,
-        left: 40,
-        right: 40,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
         zIndex: 1000,
-        borderRadius: 10,
-        backgroundColor: 'white',
+        backgroundColor: 'rgba(0,0,0,0.5)',
         border: '1px solid black',
+        padding: 40,
+      }
+
+      const buttonStyle = {
+        backgroundColor: 'white',
+        color: 'black',
+        paddingLeft: 15,
+        lineHeight: '40px',
       }
 
       const overlay = (
-        <div style={style}>
+        <div style={style}
+          onClick={() => this.setState({overlay: null})}>
           {actions.map(([name, f]) => {
             return (
               <div
+                style={buttonStyle}
                 key={name}
                 onClick={f}
               >{name}</div>
