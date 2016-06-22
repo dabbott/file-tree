@@ -2,7 +2,7 @@ import path from 'path'
 import EventEmitter from 'events'
 
 import { split, within } from './utils/pathUtils'
-import { ensureNode, createFileNode, createDirectoryNode } from './utils/treeUtils'
+import { traverse, ensureNode, createFileNode, createDirectoryNode } from './utils/treeUtils'
 
 class Tree extends EventEmitter {
   constructor(rootPath = '/') {
@@ -150,6 +150,26 @@ class Tree extends EventEmitter {
 
     return item
   }
+  removeFile(itemPath) {
+    this.remove(itemPath)
+  }
+  removeDir(itemPath) {
+    this.remove(itemPath)
+  }
+  move(oldPath, newPath) {
+    const item = this.remove(oldPath)
+
+    if (item) {
+      this.add(newPath, item)
+
+      // Update names and paths of children
+      traverse(item, (child, childPath) => {
+        const basePath = path.basename(childPath)
+        child.name = basePath
+        child.path = childPath
+      })
+    }
+  }
   setMetadataField(itemPath, field, value) {
     let metadata = this._state.metadata[itemPath]
 
@@ -160,12 +180,6 @@ class Tree extends EventEmitter {
     metadata[field] = value
 
     this.emitChange()
-  }
-  removeFile(itemPath) {
-    this.remove(itemPath)
-  }
-  removeDir(itemPath) {
-    this.remove(itemPath)
   }
   toJS() {
     return this._state

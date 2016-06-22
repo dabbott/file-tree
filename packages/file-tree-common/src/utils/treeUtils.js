@@ -73,6 +73,20 @@ export const countVisibleNodes = (node, metadata) => {
   return count
 }
 
+export const traverse = (node, f, filePath) => {
+  filePath = filePath || node.path
+
+  f(node, filePath)
+
+  if (node.type === 'directory') {
+    const {children} = node
+
+    for (let key in children) {
+      traverse(children[key], f, path.join(filePath, key))
+    }
+  }
+}
+
 export const ensureNode = (dirPath, state) => {
   const parts = split(dirPath)
   const {root} = path.parse ? path.parse(dirPath) : {root: '/'}

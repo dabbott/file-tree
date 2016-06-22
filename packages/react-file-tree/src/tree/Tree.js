@@ -128,10 +128,9 @@ const PLUGINS = {
     },
   },
   keyboard: {
-    onKeyDown: function (pluginOptions, e, node, nodeMetadata, index) {
+    onKeyDown: function (pluginOptions, e) {
       const {controller} = this.props
       const {tree, metadata} = this.state
-      const {selected} = nodeMetadata
 
       switch (e.which) {
         // up
@@ -176,7 +175,7 @@ const PLUGINS = {
           if (! newFileName) { return }
 
           const newPath = nodePath.join(path, newFileName)
-          if (! confirm(`Write ${newPath}?`)) { return}
+          if (! confirm(`Write ${newPath}?`)) { return }
 
           controller.run('writeFile', newPath, '')
         }])
@@ -188,7 +187,7 @@ const PLUGINS = {
           if (! newFileName) { return }
 
           const newPath = nodePath.join(path, newFileName)
-          if (! confirm(`Write ${newPath}?`)) { return}
+          if (! confirm(`Write ${newPath}?`)) { return }
 
           controller.run('mkdir', newPath)
         }])
@@ -201,15 +200,15 @@ const PLUGINS = {
         if (! newFileName) { return }
 
         const newPath = nodePath.join(nodePath.dirname(path), newFileName)
-        if (! confirm(`Rename to ${newPath}?`)) { return}
+        if (! confirm(`Rename to ${newPath}?`)) { return }
 
-        controller.run('move', path, newPath)
+        controller.run('rename', path, newPath)
       }])
 
       actions.push([`Delete ${name}`, () => {
         this.setState({overlay: null})
 
-        if (! confirm(`Are you sure you want to delete ${path}?`)) { return}
+        if (! confirm(`Are you sure you want to delete ${path}?`)) { return }
 
         controller.run('remove', path)
       }])

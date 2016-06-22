@@ -114,18 +114,9 @@ module.exports = class extends EventEmitter {
         tree.addDir(filePath, { loading: true })
         break
       }
-      case 'move': {
+      case 'rename': {
         const [oldPath, newPath] = args
-        const node = tree.get(oldPath)
-        if (node) {
-          if (node.type === 'directory') {
-            tree.removeDir(oldPath)
-            tree.addDir(newPath, { loading: true })
-          } else {
-            tree.removeFile(oldPath)
-            tree.addFile(newPath, { loading: true })
-          }
-        }
+        tree.move(oldPath, newPath)
         break
       }
       case 'remove': {
