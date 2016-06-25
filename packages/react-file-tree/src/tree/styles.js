@@ -5,7 +5,6 @@ const styles = {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'stretch',
-    backgroundColor: 'rgba(0,0,0,0.1)',
     outline: 'none',
   },
   nodeContent: {
@@ -40,8 +39,8 @@ export const getPaddedStyle = memoize((depth, selected, hover) => {
   return {
     paddingLeft: depth * 20,
     ...styles.nodeContent,
-    backgroundColor: selected ? 'rgba(255,255,255,0.1)' :
-        hover ? 'rgba(255,255,255,0.05)' : 'transparent',
+    backgroundColor: selected ? '#888' :
+        hover ? '#555' : '#333',
   }
 })
 
