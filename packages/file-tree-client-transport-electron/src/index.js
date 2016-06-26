@@ -21,5 +21,9 @@ class Client extends EventEmitter {
 export default (ipcRenderer) => {
   ipcRenderer.send('connection')
 
+  window.addEventListener('unload', () => {
+    ipcRenderer.send('disconnect')
+  })
+
   return new Client(ipcRenderer)
 }

@@ -171,7 +171,14 @@ const PLUGINS = {
         actions.push(['Create file', () => {
           this.setState({overlay: null})
 
-          const newFileName = prompt('Enter a name for the new file')
+          let newFileName
+          try {
+            // Prompt doesn't exist in electron
+            prompt('Enter a name for the new file')
+          } catch (e) {
+            newFileName = 'test'
+          }
+
           if (! newFileName) { return }
 
           const newPath = nodePath.join(path, newFileName)
@@ -183,7 +190,14 @@ const PLUGINS = {
         actions.push(['Create directory', () => {
           this.setState({overlay: null})
 
-          const newFileName = prompt('Enter a name for the new directory')
+          let newFileName
+          try {
+            // Prompt doesn't exist in electron
+            prompt('Enter a name for the new directory')
+          } catch (e) {
+            newFileName = 'test'
+          }
+
           if (! newFileName) { return }
 
           const newPath = nodePath.join(path, newFileName)
@@ -196,7 +210,14 @@ const PLUGINS = {
       actions.push([`Rename ${name}`, () => {
         this.setState({overlay: null})
 
-        const newFileName = prompt(`Enter a new name for the ${type}`)
+        let newFileName
+        try {
+          // Prompt doesn't exist in electron
+          prompt(`Enter a new name for the ${type}`)
+        } catch (e) {
+          newFileName = 'test'
+        }
+
         if (! newFileName) { return }
 
         const newPath = nodePath.join(nodePath.dirname(path), newFileName)
