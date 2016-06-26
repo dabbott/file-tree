@@ -34,9 +34,9 @@ fileTree.on('change', () => {
     <FileTree
       controller={fileTree}
       plugins={['expand', 'select', 'keyboard', 'actionsheet']}
-      onClick={(e, node, metadata, controller) => console.log('clicked', node.path)}
-      onExpand={(e, node, metadata, controller) => console.log('expanded', node.path)}
-      onSelect={(e, node, metadata, controller) => console.log('select', node.path)}
+      //onClick={(e, node, metadata, controller) => console.log('clicked', node.path)}
+      //onExpand={(e, node, metadata, controller) => console.log('expanded', node.path)}
+      //onSelect={(e, node, metadata, controller) => console.log('select', node.path)}
       nodeHeight={20}
       NodeComponent={Node}
     />,
