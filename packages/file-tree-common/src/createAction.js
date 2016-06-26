@@ -22,7 +22,15 @@ const actions = {
       type: 'batch',
       payload: actions,
     }
-  }
+  },
+  response: (id, err, data) => {
+    return {
+      type: 'response',
+      error: !! err,
+      meta: { id },
+      payload: err ? err : data,
+    }
+  },
 }
 
 export default (type, ...args) => actions[type](...args)

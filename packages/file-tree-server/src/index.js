@@ -6,6 +6,24 @@ import { Tree, WorkQueue, chokidarAdapter, createAction } from 'file-tree-common
 
 module.exports = class extends EventEmitter {
 
+  constructor(rootPath, transport) {
+    super()
+
+    this._rootPath = rootPath
+    this._transport = transport
+
+    this._workQueue = new WorkQueue(10)
+    this._batchedActions = []
+
+    this._tree = new Tree(rootPath)
+    this._watcher = chokidar.watch(rootPath, {
+      persistent: true,
+      depth: 0,
+    })
+
+    this.initialize()
+  }
+
   get watcher() {
     return this._watcher
   }
@@ -22,97 +40,82 @@ module.exports = class extends EventEmitter {
     return this._rootPath
   }
 
-  constructor(rootPath, transport) {
-    super()
+  initialize() {
+    const {rootPath, tree, watcher, transport, _workQueue: workQueue, _batchedActions: batchedActions} = this
+    const updateTree = chokidarAdapter(tree, true)
+    const enqueueAction = (action) => batchedActions.push(action)
 
-    this._rootPath = rootPath
-    this._transport = transport
+    workQueue.on('finish', this.handleFinishQueue.bind(this))
+    transport.on('connection', this.handleConnection.bind(this))
 
-    this._workQueue = new WorkQueue(10)
-    this._batchedActions = []
+    tree.on('change', () => {
+      const action = createAction('change', tree.toJS())
 
-    this._workQueue.on('finish', () => {
-      const actions = this._batchedActions.slice()
-      this._batchedActions.length = 0
-
-      const batchAction = createAction('batch', actions)
-      this.transport.send(batchAction)
-    })
-
-    this.watch(rootPath)
-
-    this.transport.on('connection', (socket) => {
-      console.log('connection')
-      const {tree, rootPath} = this
-      socket.send(createAction("initialState", tree.toJS(), rootPath))
-
-      socket.on('message', (action) => {
-        console.log('message', action)
-        const {type, payload, meta} = action
-
-        switch (type) {
-          case 'watchPath': {
-            const {path} = payload
-            this.watcher.add(path + '/')
-            console.log('watching path', path)
-            break
-          }
-          case 'request': {
-            const {methodName, args} = payload
-            const {id} = meta
-            // console.log('performing', methodName, args)
-            const callback = (err, data) => {
-              console.log('done', methodName, id, err, data)
-
-              if (err) {
-                socket.send({
-                  type: 'response',
-                  error: true,
-                  meta: { id },
-                  payload: err,
-                })
-                socket.send(createAction("initialState", tree.toJS(), rootPath))
-              } else {
-                socket.send({
-                  type: 'response',
-                  meta: { id },
-                  payload: data,
-                })
-              }
-            }
-            fs[methodName](...args, callback)
-            break
-          }
-        }
-      })
-    })
-  }
-
-  watch(rootPath) {
-    this._watcher = chokidar.watch(rootPath, {
-      persistent: true,
-      depth: 0,
-    })
-
-    this._tree = new Tree(rootPath)
-    this._tree.on('change', () => {
-      const action = createAction('change', this._tree.toJS())
       this.emit('change', action)
     })
 
-    this._watcher.on('all', chokidarAdapter(this._tree, true))
-    this._watcher.on('all', (name, path, stat) => {
+    watcher.on('all', (name, path, stat) => {
       const action = createAction('event', name, path, stat)
+
       this.emit('event', action)
 
-      this._workQueue.push(
-        this._batchAction.bind(this, this._batchedActions, action)
-      )
+      // Update the tree
+      updateTree(name, path, stat)
+
+      // Enqueue the event. They are sent to clients in batches.
+      workQueue.push(enqueueAction.bind(this, action))
     })
   }
 
-  _batchAction(batch, action) {
-    batch.push(action)
+  handleFinishQueue() {
+    const {transport, _batchedActions: batchedActions} = this
+    const actions = batchedActions.slice()
+    const batchAction = createAction('batch', actions)
+
+    batchedActions.length = 0
+    transport.send(batchAction)
+  }
+
+  handleConnection(client) {
+    const {tree, rootPath} = this
+
+    console.log('connection')
+
+    client.send(createAction("initialState", tree.toJS(), rootPath))
+    client.on('message', this.handleMessage.bind(this, client))
+  }
+
+  handleMessage(client, action) {
+    const {rootPath, tree} = this
+    const {type, payload, meta} = action
+
+    console.log('message', action)
+
+    switch (type) {
+      case 'watchPath': {
+        const {path} = payload
+        this.watcher.add(path + '/')
+        break
+      }
+      case 'request': {
+        const {methodName, args} = payload
+        const {id} = meta
+
+        // Perform a fs operation
+        fs[methodName](...args, (err, data) => {
+          console.log('done', methodName, id, err, data)
+
+          client.send(createAction('response', id, err, data))
+
+          // If the operation failed, the client may be in a bad state.
+          // Push the server's accurate state to reset the client.
+          if (err) {
+            client.send(createAction('initialState', tree.toJS(), rootPath))
+          }
+        })
+        break
+      }
+    }
   }
 
 }
