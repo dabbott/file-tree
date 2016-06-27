@@ -78,6 +78,17 @@ const operations = {
 
     controller.run('remove', path)
   },
+  setRootPath: function (controller, node) {
+    const {path} = node
+
+    this.setState({overlay: null})
+
+    const newPath = maybePrompt(`Enter a new root path`, path)
+    if (! newPath) { return }
+    if (! confirm(`Set root path to ${newPath}?`)) { return }
+
+    controller.setRootPath(newPath)
+  },
 }
 
 export default {
@@ -95,6 +106,7 @@ export default {
     }
     actions.push([`Rename ${name}`, operations.rename])
     actions.push([`Delete ${name}`, operations.delete])
+    actions.push([`Set root path`, operations.setRootPath])
 
     actions = actions.map(([title, f]) => [title, f.bind(this, controller, node)])
 

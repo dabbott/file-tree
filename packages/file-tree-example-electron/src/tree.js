@@ -4,4 +4,4 @@ import electron from 'electron'
 
 const { ipcMain } = electron
 
-const tree = new FileTreeServer(__dirname, transport(ipcMain))
+const tree = new FileTreeServer(transport(ipcMain), __dirname)

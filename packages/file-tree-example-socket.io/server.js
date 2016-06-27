@@ -5,7 +5,7 @@ const io = require('socket.io')()
 const PORT = 3000
 const DIRECTORY = __dirname
 
-const tree = new FileTreeServer(DIRECTORY, transport(io))
+const tree = new FileTreeServer(transport(io), DIRECTORY)
 
 console.log('socket.io listening on', PORT)
 

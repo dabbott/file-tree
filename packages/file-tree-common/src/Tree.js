@@ -38,6 +38,8 @@ class Tree extends EventEmitter {
 
     if (tree || ! _state.tree) {
       _state.tree = tree || ensureNode(rootPath)
+    } else {
+      ensureNode(rootPath, _state.tree)
     }
 
     if (stat || ! _state.stat) {

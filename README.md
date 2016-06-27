@@ -22,7 +22,7 @@ const FileTreeServer = require('file-tree-server')
 const transport = require('file-tree-server-transport-socket.io')
 const io = require('socket.io')()
 
-const tree = new FileTreeServer(__dirname, transport(io))
+const tree = new FileTreeServer(transport(io), __dirname)
 
 io.listen(3000)
 ```
@@ -36,7 +36,7 @@ import electron from 'electron'
 
 const { ipcMain } = electron
 
-const tree = new FileTreeServer(__dirname, transport(ipcMain))
+const tree = new FileTreeServer(transport(ipcMain), __dirname)
 ```
 
 ### Client API
@@ -59,7 +59,7 @@ fileTree.on('change', () => {
   ReactDOM.render(
     <FileTree
       controller={fileTree}
-      plugins={['expand', 'select', 'actionsheet']}
+      plugins={['expand', 'select']}
     />,
     document.querySelector('#app')
   )
@@ -85,7 +85,7 @@ fileTree.on('change', () => {
   ReactDOM.render(
     <FileTree
       controller={fileTree}
-      plugins={['expand', 'select', 'actionsheet']}
+      plugins={['expand', 'select']}
     />,
     document.querySelector('#app')
   )

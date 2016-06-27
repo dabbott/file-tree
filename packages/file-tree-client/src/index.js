@@ -128,4 +128,8 @@ module.exports = class extends EventEmitter {
   watchPath(path) {
     this._transport.send(createAction('watchPath', path))
   }
+
+  setRootPath(path) {
+    this._transport.send(createAction('rootPath', path))
+  }
 }

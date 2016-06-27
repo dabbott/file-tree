@@ -21,9 +21,22 @@ export const createFileNode = (filePath, stat) => {
   }
 }
 
-export const sortNodes = (nodes) => {
-  return Object.keys(nodes).sort().map((key) => {
-    return nodes[key]
+// Sort nodes by directory first, then name
+export const sortNodes = (children) => {
+  const nodes = Object.keys(children).map((key) => {
+    return children[key]
+  })
+
+  return nodes.sort((a, b) => {
+    if (a.type !== b.type) {
+      if (a.type === 'directory') {
+        return -1
+      } else {
+        return 1
+      }
+    }
+
+    return a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase())
   })
 }
 
@@ -98,7 +111,13 @@ export const ensureNode = (dirPath, state) => {
   while (parts.length) {
     const part = parts[0]
     currentPath = path.join(currentPath, part)
-    lastPart = lastPart.children[part] = createDirectoryNode(currentPath)
+
+    // Create node if it doesn't exist
+    if (! lastPart.children[part]) {
+      lastPart.children[part] = createDirectoryNode(currentPath)
+    }
+
+    lastPart = lastPart.children[part]
     parts.shift()
   }
 

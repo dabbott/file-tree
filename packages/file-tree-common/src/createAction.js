@@ -44,6 +44,12 @@ const actions = {
       payload: { path },
     }
   },
+  rootPath: (path) => {
+    return {
+      type: 'rootPath',
+      payload: { path },
+    }
+  },
 }
 
 export default (type, ...args) => actions[type](...args)

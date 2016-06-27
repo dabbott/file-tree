@@ -6,11 +6,11 @@ import { Tree, WorkQueue, chokidarAdapter, createAction } from 'file-tree-common
 
 module.exports = class extends EventEmitter {
 
-  constructor(rootPath, transport) {
+  constructor(transport, rootPath) {
     super()
 
-    this._rootPath = rootPath
     this._transport = transport
+    this._rootPath = rootPath
 
     this._workQueue = new WorkQueue(10)
     this._batchedActions = []
@@ -86,7 +86,7 @@ module.exports = class extends EventEmitter {
   }
 
   handleMessage(client, action) {
-    const {rootPath, tree} = this
+    const {rootPath, tree, watcher} = this
     const {type, payload, meta} = action
 
     console.log('message', action)
@@ -94,7 +94,12 @@ module.exports = class extends EventEmitter {
     switch (type) {
       case 'watchPath': {
         const {path} = payload
-        this.watcher.add(path + '/')
+        watcher.add(path + '/')
+        break
+      }
+      case 'rootPath': {
+        const {path} = payload
+        this.setRootPath(path)
         break
       }
       case 'request': {
@@ -116,6 +121,20 @@ module.exports = class extends EventEmitter {
         break
       }
     }
+  }
+
+  setRootPath(rootPath) {
+    const {watcher, tree, transport} = this
+
+    // TODO: An option to stop existing path watchers
+
+    // Set new root path
+    this._rootPath = rootPath
+    tree.set(rootPath)
+    watcher.add(rootPath)
+
+    // Update all clients to new tree
+    transport.send(createAction('initialState', tree.toJS(), rootPath))
   }
 
 }
