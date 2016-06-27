@@ -10,6 +10,9 @@ export default class extends EventEmitter {
   constructor(wait = 0) {
     super()
 
+    this.queue = []
+    this.willRun = false
+
     this.run = this.run.bind(this)
 
     if (wait > 0) {
@@ -20,13 +23,12 @@ export default class extends EventEmitter {
     } else {
       this.enqueue = () => nextFrame(this.run)
     }
-
-    this.queue = []
-    this.willRun = false
   }
 
   push(f) {
-    this.queue.push(f)
+    const {queue} = this
+
+    queue.push(f)
 
     if (! this.willRun) {
       this.willRun = true
@@ -39,21 +41,20 @@ export default class extends EventEmitter {
       return
     }
 
-    this.willRun = false
-
+    const {queue} = this
     const startTime = Date.now()
 
-    this.emit('start', this.queue.length)
+    this.willRun = false
+
+    this.emit('start', queue.length)
 
     let i = 0
-    while (i < this.queue.length) {
-      this.queue[i]()
-      const elapsed = Date.now() - startTime
-
+    while (i < queue.length) {
+      queue[i]()
       i++
 
-      if (elapsed > 30) {
-        console.log('elapsed =>', elapsed, i)
+      // Yield control after 30ms
+      if (Date.now() - startTime > 30) {
         this.willRun = true
         this.enqueue()
         break
@@ -62,6 +63,6 @@ export default class extends EventEmitter {
 
     this.emit('finish', i)
 
-    this.queue.splice(0, i)
+    queue.splice(0, i)
   }
 }
