@@ -14,7 +14,7 @@ fileTree.on('change', () => {
   ReactDOM.render(
     <FileTree
       controller={fileTree}
-      plugins={['expand', 'select', 'keyboard', 'actionsheet']}
+      plugins={['expand', 'select', 'actionsheet']}
     />,
     document.querySelector('#app')
   )
