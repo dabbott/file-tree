@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "file-tree-common": "*"
+    "file-tree-common": "^0.0.1"
   },
   "author": "",
   "license": "ISC"
