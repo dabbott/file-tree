@@ -6,17 +6,21 @@ export default (tree, debug) => (eventName, path, stat) => {
   }
 
   switch (eventName) {
-    case 'add':
+    case 'add': {
       tree.addFile(path, stat)
-    break
-    case 'addDir':
+      break
+    }
+    case 'addDir': {
       tree.addDir(path, stat)
-    break
-    case 'unlink':
+      break
+    }
+    case 'unlink': {
       tree.removeFile(path)
-    break
-    case 'unlinkDir':
+      break
+    }
+    case 'unlinkDir': {
       tree.removeDir(path)
-    break
+      break
+    }
   }
 }

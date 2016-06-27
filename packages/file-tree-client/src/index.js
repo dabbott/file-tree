@@ -1,11 +1,31 @@
 import EventEmitter from 'events'
 
-import { Tree, WorkQueue, createAction, chokidarAdapter } from 'file-tree-common'
+import { Tree, WorkQueue, createAction, chokidarAdapter, fsAdapter } from 'file-tree-common'
 
-let initialId = 0
-const getId = () => ++initialId
+let requestId = 0
+const getRequestId = () => ++requestId
 
 module.exports = class extends EventEmitter {
+
+  constructor(transport) {
+    super()
+
+    this._transport = transport
+
+    this._requestMap = {}
+    this._tree = new Tree()
+    this._workQueue = new WorkQueue()
+    this._updateTreeOnEvent = chokidarAdapter(this._tree)
+    this._updateTreeOnFSRequest = fsAdapter(this._tree)
+
+    this._emitEvent = this._emitAction.bind(this, "event")
+    this._emitChange = this._emitAction.bind(this, "change")
+    this._performAction = this._performAction.bind(this)
+    this.startOperation = this.startOperation.bind(this)
+    this.finishOperation = this.finishOperation.bind(this)
+
+    this.initialize()
+  }
 
   get tree() {
     return this._tree
@@ -23,65 +43,55 @@ module.exports = class extends EventEmitter {
     return this._tree.state.metadata
   }
 
-  constructor(transport) {
-    super()
+  initialize() {
+    const {transport, tree, _workQueue: workQueue} = this
 
-    this._transport = transport
-
-    this._emitEvent = this._emitAction.bind(this, "event")
-    this._emitChange = this._emitAction.bind(this, "change")
-    this._performAction = this._performAction.bind(this)
-    this.startOperation = this.startOperation.bind(this)
-    this.finishOperation = this.finishOperation.bind(this)
-
-    this._requestMap = {}
-
-    this._tree = new Tree()
-    this._tree.on('change', this._emitChange)
-
-    this._workQueue = new WorkQueue()
-    this._workQueue.on('start', (taskCount) => {
-      console.log('tasks =>', taskCount)
-      this._tree.startTransaction()
-    })
-    this._workQueue.on('finish', this._tree.finishTransaction)
-
-    this._actions = chokidarAdapter(this.tree)
-
+    tree.on('change', this._emitChange)
     transport.on('message', this._performAction)
+
+    workQueue.on('start', (taskCount) => {
+      console.log('tasks =>', taskCount)
+      tree.startTransaction()
+    })
+    workQueue.on('finish', tree.finishTransaction)
+  }
+  
+  _emitAction(type, ...args) {
+    const action = createAction(type, ...args)
+    this.emit(type, action)
   }
 
   _performAction(action) {
+    const {tree, _workQueue: workQueue, _requestMap: requestMap} = this
     const {type, payload, error, meta} = action
 
     switch (type) {
       case 'initialState': {
         console.log('loading initial tree', tree)
         const {rootPath, state: {tree, stat}} = payload
+
         this.tree.set(rootPath, tree, stat)
         break
       }
       case 'batch': {
         console.log('executing batch =>', payload.length)
-        this.tree.startTransaction()
+        tree.startTransaction()
         payload.forEach(this._performAction)
-        this.tree.finishTransaction()
+        tree.finishTransaction()
         break
       }
       case 'event': {
         const {name, path, stat} = payload
-        const task = this._actions.bind(null, name, path, stat)
+        const task = this._updateTreeOnEvent.bind(null, name, path, stat)
+
         console.log('task =>', name, path)
-        this._workQueue.push(task)
+        workQueue.push(task)
         break
       }
       case 'response': {
         const {id} = meta
-        if (error) {
-          this._requestMap[id].reject(payload)
-        } else {
-          this._requestMap[id].resolve(payload)
-        }
+
+        requestMap[id][error ? 'reject' : 'resolve'](payload)
         break
       }
     }
@@ -100,47 +110,14 @@ module.exports = class extends EventEmitter {
   }
 
   run(methodName, ...args) {
-    const {tree} = this
-    const id = getId()
+    const id = getRequestId()
 
-    switch (methodName) {
-      case 'writeFile': {
-        const [filePath] = args
-        tree.addFile(filePath, { loading: true })
-        break
-      }
-      case 'mkdir': {
-        const [filePath] = args
-        tree.addDir(filePath, { loading: true })
-        break
-      }
-      case 'rename': {
-        const [oldPath, newPath] = args
-        tree.move(oldPath, newPath)
-        break
-      }
-      case 'remove': {
-        const [filePath] = args
-        const node = tree.get(filePath)
-        if (node) {
-          if (node.type === 'directory') {
-            tree.removeDir(filePath)
-          } else {
-            tree.removeFile(filePath)
-          }
-        }
-        break
-      }
-    }
+    // Assume operation occurs successfully.
+    // On failure, the server will push a fresh state.
+    this._updateTreeOnFSRequest(methodName, ...args)
 
-    this._transport.send({
-      type: 'request',
-      meta: { id },
-      payload: {
-        methodName,
-        args,
-      },
-    })
+    // Run the operation on the server
+    this._transport.send(createAction('request', id, methodName, args))
 
     return new Promise((resolve, reject) => {
       this._requestMap[id] = {resolve, reject}
@@ -148,14 +125,6 @@ module.exports = class extends EventEmitter {
   }
 
   watchPath(path) {
-    this._transport.send({
-      type: 'watchPath',
-      payload: { path },
-    })
-  }
-
-  _emitAction(type, ...args) {
-    const action = createAction(type, ...args)
-    this.emit(type, action)
+    this._transport.send(createAction('watchPath', path))
   }
 }

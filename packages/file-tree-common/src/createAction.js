@@ -26,9 +26,22 @@ const actions = {
   response: (id, err, data) => {
     return {
       type: 'response',
-      error: !! err,
       meta: { id },
+      error: !! err,
       payload: err ? err : data,
+    }
+  },
+  request: (id, methodName, args) => {
+    return {
+      type: 'request',
+      meta: { id },
+      payload: { methodName, args },
+    }
+  },
+  watchPath: (path) => {
+    return {
+      type: 'watchPath',
+      payload: { path },
     }
   },
 }
