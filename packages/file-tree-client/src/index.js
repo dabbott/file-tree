@@ -55,7 +55,7 @@ module.exports = class extends EventEmitter {
     })
     workQueue.on('finish', tree.finishTransaction)
   }
-  
+
   _emitAction(type, ...args) {
     const action = createAction(type, ...args)
     this.emit(type, action)
@@ -85,6 +85,7 @@ module.exports = class extends EventEmitter {
         const task = this._updateTreeOnEvent.bind(null, name, path, stat)
 
         console.log('task =>', name, path)
+        this._emitEvent(name, path, stat)
         workQueue.push(task)
         break
       }
