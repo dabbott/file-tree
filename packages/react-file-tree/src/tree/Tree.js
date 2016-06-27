@@ -6,271 +6,17 @@ import shallowCompare from 'react-addons-shallow-compare'
 import nodePath from 'path'
 
 import DefaultNode from './Node'
-import { treeUtils } from 'file-tree-common'
+import { treeUtils, normalizePlugins } from 'file-tree-common'
 const { getVisibleNodesByIndex, countVisibleNodes } = treeUtils
+import styles from './styles'
+import selectPlugin from './plugins/select'
+import expandPlugin from './plugins/expand'
+import actionsheetPlugin from './plugins/actionsheet'
 
-const styles = {
-  container: {
-    flex: '1',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'stretch',
-    minHeight: 0,
-    minWidth: 0,
-    overflow: 'hidden',
-    flexWrap: 'no-wrap',
-    position: 'relative',
-  },
-  autoSizerWrapper: {
-    flex: '1 1 auto',
-    minHeight: 0,
-    minWidth: 0,
-    overflow: 'hidden',
-  },
-  node: {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'stretch',
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    outline: 'none',
-  },
-}
-
-const selectNode = function(e, node, nodeMetadata, index) {
-  const {controller} = this.props
-  const {path} = node
-  const {metadata} = controller
-
-  // Disable all existing selections
-  for (let key in metadata) {
-    if (metadata[key] && metadata[key].selected) {
-      controller.updateNodeMetadata(key, 'selected', false)
-    }
-  }
-
-  controller.updateNodeMetadata(path, 'selected', true)
-
-  this.props.onSelect && this.props.onSelect.call(this, e, node, nodeMetadata, index)
-}
-
-const getSelectionInfo = (tree, metadata) => {
-  const nodeInfo = getVisibleNodesByIndex(tree, metadata, 0, Infinity)
-  let selectedIndex = 0
-  while (selectedIndex < nodeInfo.length) {
-    const {path} = nodeInfo[selectedIndex].node
-    if (metadata[path] && metadata[path].selected) {
-      break
-    }
-    selectedIndex++
-  }
-
-  return {
-    nodes: nodeInfo.map(({node}) => node),
-    selectedIndex,
-  }
-}
-
-const PLUGINS = {
-  expand: {
-    onClick: function (pluginOptions, e, node, nodeMetadata, index) {
-      const {controller} = this.props
-      const {type, path} = node
-      const {expanded} = nodeMetadata
-
-      // Only expand directories if no meta or shift key is pressed
-      if (type === 'directory' && ! e.metaKey && ! e.shiftKey) {
-        const next = ! expanded
-
-        controller.updateNodeMetadata(path, 'expanded', next)
-
-        if (next) {
-          controller.watchPath(path)
-        }
-
-        this.props.onExpand && this.props.onExpand.call(this, e, node, nodeMetadata, index)
-      }
-    },
-  },
-  select: {
-    onClick: function (pluginOptions, e, node, nodeMetadata, index) {
-      const {controller} = this.props
-      const {type, path} = node
-      const {selected} = nodeMetadata
-      const {tree, metadata} = this.state
-
-      if (e.metaKey && pluginOptions.multiple !== false) {
-        controller.updateNodeMetadata(path, 'selected', ! selected)
-        if (! selected) {
-          this.props.onSelect && this.props.onSelect.call(this, e, node, nodeMetadata, index)
-        }
-      } else if (e.shiftKey && pluginOptions.multiple !== false) {
-        const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
-        const range = selectedIndex > index ? [index, selectedIndex] : [selectedIndex, index]
-
-        // console.log('selecting', index, '<==>', selectedIndex, range)
-
-        for (let i = range[0]; i <= range[1]; i++) {
-          const currentNode = nodes[i]
-          const currentMetadata = metadata[currentNode.path] || {}
-          const currentSelected = currentMetadata.selected
-          controller.updateNodeMetadata(currentNode.path, 'selected', true)
-          if (! currentSelected) {
-            this.props.onSelect && this.props.onSelect.call(this, e, currentNode, currentMetadata, i)
-          }
-        }
-      } else {
-        selectNode.call(this, e, node, nodeMetadata, index)
-      }
-    },
-  },
-  keyboard: {
-    onKeyDown: function (pluginOptions, e) {
-      const {controller} = this.props
-      const {tree, metadata} = this.state
-
-      switch (e.which) {
-        // up
-        case 38: {
-          const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
-          if (selectedIndex > 0) {
-            e.preventDefault()
-            const nextNode = nodes[selectedIndex - 1]
-            selectNode.call(this, e, nextNode, metadata[nextNode.path] || {}, selectedIndex - 1)
-          }
-          break
-        }
-        // down
-        case 40: {
-          const {nodes, selectedIndex} = getSelectionInfo(tree, metadata)
-          if (selectedIndex < nodes.length - 1) {
-            e.preventDefault()
-            const nextNode = nodes[selectedIndex + 1]
-            selectNode.call(this, e, nextNode, metadata[nextNode.path] || {}, selectedIndex + 1)
-          }
-          break
-        }
-      }
-    },
-  },
-  actionsheet: {
-    onContextMenu: function (pluginOptions, e, node, nodeMetadata, index) {
-      e.preventDefault()
-
-      const {controller} = this.props
-      const {tree, metadata} = this.state
-      const {type, path, name} = node
-      const {selected} = nodeMetadata
-
-      const actions = []
-
-      if (type === 'directory') {
-        actions.push(['Create file', () => {
-          this.setState({overlay: null})
-
-          let newFileName
-          try {
-            // Prompt doesn't exist in electron
-            prompt('Enter a name for the new file')
-          } catch (e) {
-            newFileName = 'test'
-          }
-
-          if (! newFileName) { return }
-
-          const newPath = nodePath.join(path, newFileName)
-          if (! confirm(`Write ${newPath}?`)) { return }
-
-          controller.run('writeFile', newPath, '')
-        }])
-
-        actions.push(['Create directory', () => {
-          this.setState({overlay: null})
-
-          let newFileName
-          try {
-            // Prompt doesn't exist in electron
-            prompt('Enter a name for the new directory')
-          } catch (e) {
-            newFileName = 'test'
-          }
-
-          if (! newFileName) { return }
-
-          const newPath = nodePath.join(path, newFileName)
-          if (! confirm(`Write ${newPath}?`)) { return }
-
-          controller.run('mkdir', newPath)
-        }])
-      }
-
-      actions.push([`Rename ${name}`, () => {
-        this.setState({overlay: null})
-
-        let newFileName
-        try {
-          // Prompt doesn't exist in electron
-          prompt(`Enter a new name for the ${type}`)
-        } catch (e) {
-          newFileName = 'test'
-        }
-
-        if (! newFileName) { return }
-
-        const newPath = nodePath.join(nodePath.dirname(path), newFileName)
-        if (! confirm(`Rename to ${newPath}?`)) { return }
-
-        controller.run('rename', path, newPath)
-      }])
-
-      actions.push([`Delete ${name}`, () => {
-        this.setState({overlay: null})
-
-        if (! confirm(`Are you sure you want to delete ${path}?`)) { return }
-
-        controller.run('remove', path)
-      }])
-
-      const style = {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-        zIndex: 1000,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        border: '1px solid black',
-        padding: 40,
-      }
-
-      const buttonStyle = {
-        backgroundColor: 'white',
-        color: 'black',
-        paddingLeft: 15,
-        lineHeight: '40px',
-      }
-
-      const overlay = (
-        <div style={style}
-          onClick={() => this.setState({overlay: null})}>
-          {actions.map(([name, f]) => {
-            return (
-              <div
-                style={buttonStyle}
-                key={name}
-                onClick={f}
-              >{name}</div>
-            )
-          })}
-        </div>
-      )
-
-      this.setState({overlay})
-    }
-  }
+const PLUGIN_MAP = {
+  select: selectPlugin,
+  expand: expandPlugin,
+  actionsheet: actionsheetPlugin,
 }
 
 export default class extends Component {
@@ -302,29 +48,13 @@ export default class extends Component {
       tree,
       metadata,
       visibleNodes: countVisibleNodes(tree, metadata),
-      plugins: this.normalizePlugins(plugins),
+      indexCache: getVisibleNodesByIndex(tree, metadata),
+      plugins: normalizePlugins(plugins, PLUGIN_MAP),
     }
-  }
-
-  normalizePlugins(plugins) {
-    return plugins.map(plugin => {
-      if (! Array.isArray(plugin)) {
-        plugin = [plugin, {}]
-      }
-
-      if (typeof plugin[0] === 'string') {
-        return [PLUGINS[plugin[0]], plugin[1] || {}]
-      }
-
-      return plugin
-    })
   }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.controller.version !== this.state.version) {
-      delete this.indexCache
-      delete this.indexOffset
-
       this.setState(this.mapPropsToState(nextProps))
     }
   }
@@ -345,52 +75,30 @@ export default class extends Component {
     const {controller} = this.props
 
     this.runInOperation(() => {
+
+      // Run each plugin for this event
       plugins.forEach(([plugin, options]) => {
-        plugin[eventName] && plugin[eventName].call(this,
-          options,
-          e,
-          node,
-          metadata,
-          index
-        )
+        if (plugin[eventName]) {
+          plugin[eventName].call(this, options, e, node, metadata, index)
+        }
       })
-      this.props[eventName] && this.props[eventName].call(this,
-        e,
-        node,
-        metadata,
-        index
-      )
+
+      // Run handlers passed as props
+      if (this.props[eventName]) {
+        this.props[eventName].call(this, e, node, metadata, index)
+      }
     })
   }
 
   renderNode({index}) {
     const {NodeComponent} = this.props
-    const {tree, metadata} = this.state
-
-    if (! this.indexCache ||
-        ! this.indexCache[index - this.indexOffset]) {
-      const lowerBound = Math.max(0, index - 20)
-      const count = 40
-
-      this.indexOffset = lowerBound
-      this.indexCache = getVisibleNodesByIndex(
-        tree,
-        metadata,
-        lowerBound,
-        count
-      )
-
-      // console.log('cached', lowerBound, '<-->', upperBound)
-    }
-
-    const {node, depth} = this.indexCache[index - this.indexOffset]
+    const {metadata, indexCache} = this.state
+    const {node, depth} = indexCache[index]
     const {path} = node
     const nodeMetadata = metadata[path] || {}
 
-    // console.log('render node', path, tree, metadata)
-
     return (
-      <div style={styles.node}
+      <div style={styles.nodeContainer}
         tabIndex={'0'}
         onClick={this.handleClick.bind(this, node, nodeMetadata, index)}
         onKeyUp={this.handleKeyUp.bind(this, node, nodeMetadata, index)}
@@ -412,10 +120,8 @@ export default class extends Component {
     const {nodeHeight} = this.props
     const {visibleNodes, version, overlay} = this.state
 
-    // console.log('rendering tree', visibleNodes)
-
     return (
-      <div style={styles.container}>
+      <div style={styles.treeContainer}>
         <div style={styles.autoSizerWrapper}>
           <AutoSizer>
             {({width, height}) => (

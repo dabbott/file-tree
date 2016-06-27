@@ -27,7 +27,7 @@ export const sortNodes = (nodes) => {
   })
 }
 
-export const getVisibleNodesByIndex = (root, metadata, targetIndex, targetCount) => {
+export const getVisibleNodesByIndex = (root, metadata, targetIndex = 0, targetCount = Infinity) => {
   let currentIndex = 0
   let currentCount = 0
   const nodes = []

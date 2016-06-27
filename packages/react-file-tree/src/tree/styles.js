@@ -1,7 +1,28 @@
 import memoize from 'fast-memoize'
 
 const styles = {
+  treeContainer: {
+    flex: '1',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    minHeight: 0,
+    minWidth: 0,
+    overflow: 'hidden',
+    flexWrap: 'no-wrap',
+    position: 'relative',
+  },
+  autoSizerWrapper: {
+    flex: '1 1 auto',
+    minHeight: 0,
+    minWidth: 0,
+    overflow: 'hidden',
+  },
   nodeContainer: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'stretch',

@@ -33,7 +33,7 @@ fileTree.on('change', () => {
   ReactDOM.render(
     <FileTree
       controller={fileTree}
-      plugins={['expand', 'select', 'keyboard', 'actionsheet']}
+      plugins={['expand', 'select', 'actionsheet']}
       //onClick={(e, node, metadata, controller) => console.log('clicked', node.path)}
       //onExpand={(e, node, metadata, controller) => console.log('expanded', node.path)}
       //onSelect={(e, node, metadata, controller) => console.log('select', node.path)}
