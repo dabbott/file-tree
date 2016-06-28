@@ -2,12 +2,12 @@
 
 File tree is a collection of packages to display and manipulate the file system.
 
-![electron example](http://i.imgur.com/e8fhDJx.png)
-
 ### Quick Start
 
 * [electron](./packages/file-tree-example-electron)
 * [socket.io](./packages/file-tree-example-socket.io)
+
+![electron example](http://i.imgur.com/e8fhDJx.png)
 
 ### How it works
 
