@@ -8,7 +8,7 @@ File tree is a collection of packages to display and manipulate the file system.
 
 There are 3 core packages:
 * [file-tree-server](./packages/file-tree-server) - runs a file system watcher and builds an up-to-date tree data structure. The server passes the initial state and subsequent updates to the client.
-* [file-tree-client](./packages/file-tree-client) - displays the tree data structure from the server, as well as applying updates as they happen. Allows operating on the tree (e.g. creating, renaming, deleting files), applying changes locally, and then updating with the definitive state from the server.
+* [file-tree-client](./packages/file-tree-client) - mirrors the tree data structure from the server, as well as applying updates as they happen. Allows operating on the tree (e.g. creating, renaming, deleting files), applying changes locally, and then updating with the definitive state from the server.
 * [react-file-tree](./packages/react-file-tree) - a react component to display the file tree in a flexible, performant way.
 
 To sync server and client, you'll need to transport the events from the server to the client. Currently supported servers and clients are:
@@ -29,7 +29,7 @@ const tree = new FileTreeServer(transport(io), __dirname)
 io.listen(3000)
 ```
 
-##### With Electron
+##### With electron
 
 ```JavaScript
 import FileTreeServer from 'file-tree-server'
