@@ -12,8 +12,8 @@ There are 3 core packages:
 * [react-file-tree](./packages/react-file-tree) - a react component to display the file tree in a flexible, performant way.
 
 To sync server and client, you'll need to transport the events from the server to the client. Currently supported servers and clients are:
-* electron - [example](./packages/file-tree-example-electron) - ([main thread](./packages/file-tree-server-transport-electron), [renderer thread](./packages/file-tree-client-transport-electron))
-* socket.io - [example](./packages/file-tree-example-socket.io) - ([server](./packages/file-tree-server-transport-socket.io), [browser](./packages/file-tree-client-transport-socket.io))
+* electron - [example](./packages/file-tree-example-electron) - ([main thread adapter](./packages/file-tree-server-transport-electron), [renderer thread adapter](./packages/file-tree-client-transport-electron))
+* socket.io - [example](./packages/file-tree-example-socket.io) - ([server adapter](./packages/file-tree-server-transport-socket.io), [browser adapter](./packages/file-tree-client-transport-socket.io))
 
 ### Server Quick Start
 
