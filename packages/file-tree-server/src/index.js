@@ -97,7 +97,13 @@ module.exports = class extends EventEmitter {
     switch (type) {
       case 'watchPath': {
         const {path} = payload
-        watcher.add(path + '/')
+
+        // Don't watch the root again... strange behavior
+        if (path === '/' && watcher.getWatched()[path]) {
+          break
+        }
+
+        watcher.add(path)
         break
       }
       case 'rootPath': {

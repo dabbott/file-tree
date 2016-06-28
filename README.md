@@ -1,6 +1,8 @@
 # File Tree
 
-File tree is a collection of packages to display and manipulate a file system.
+File tree is a collection of packages to display and manipulate the file system.
+
+![electron example](http://i.imgur.com/e8fhDJx.png)
 
 ## How it works
 
