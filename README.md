@@ -13,7 +13,7 @@ To sync server and client, you'll need to transport the events from the server t
 * electron
 * socket.io
 
-### Server API
+### Server Quick Start
 
 ##### With socket.io
 
@@ -39,7 +39,7 @@ const { ipcMain } = electron
 const tree = new FileTreeServer(transport(ipcMain), __dirname)
 ```
 
-### Client API
+### Client Quick Start
 
 ##### With socket.io
 

@@ -81,8 +81,11 @@ module.exports = class extends EventEmitter {
 
     console.log('connection')
 
-    client.send(createAction("initialState", tree.toJS(), rootPath))
     client.on('message', this.handleMessage.bind(this, client))
+
+    if (rootPath) {
+      client.send(createAction("initialState", tree.toJS(), rootPath))
+    }
   }
 
   handleMessage(client, action) {
