@@ -1,6 +1,6 @@
 {
   "name": "file-tree-example-electron",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -13,13 +13,13 @@
   "license": "ISC",
   "devDependencies": {
     "electron-prebuilt": "^1.2.0",
-    "file-tree-client": "^0.0.1",
+    "file-tree-client": "^0.0.2",
     "file-tree-client-transport-electron": "^0.0.1",
-    "file-tree-server": "^0.0.1",
+    "file-tree-server": "^0.0.2",
     "file-tree-server-transport-electron": "^0.0.1",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
-    "react-file-tree": "^0.0.1",
+    "react-file-tree": "^0.0.2",
     "babel-core": "^6.9.1",
     "babel-loader": "^6.2.4",
     "babel-preset-es2015": "^6.9.0",
