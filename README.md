@@ -93,3 +93,27 @@ fileTree.on('change', () => {
   )
 })
 ```
+
+## Building for development/examples
+
+First, clone this repository
+```
+git clone https://github.com/dabbott/file-tree.git
+cd file-tree
+```
+
+Make sure you have [lerna](https://lernajs.io/) v2 installed globally
+```
+npm i -g lerna
+```
+
+Install dependencies for all packages
+```
+lerna bootstrap
+```
+
+`npm install` depencies of the root project, and build
+```
+npm i
+npm run build
+```
