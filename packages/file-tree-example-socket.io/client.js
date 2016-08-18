@@ -38,7 +38,9 @@ fileTree.on('change', () => {
       //onExpand={(e, node, metadata, controller) => console.log('expanded', node.path)}
       //onSelect={(e, node, metadata, controller) => console.log('select', node.path)}
       nodeHeight={20}
-      NodeComponent={Node}
+      renderNode={(props) => {
+        return <Node {...props}/>
+      }}
     />,
     document.querySelector('#app')
   )

@@ -88,6 +88,18 @@ module.exports = class extends EventEmitter {
     }
   }
 
+  handleMethodSideEffects(methodName, args) {
+    const {rootPath, tree, watcher} = this
+    switch(methodName) {
+      case 'rename':
+        const [oldPath, newPath] = args
+        if (newPath != rootPath && watcher.getWatched()[oldPath]) {
+          watcher.add(newPath)
+        }
+        break;
+    }
+  }
+
   handleMessage(client, action) {
     const {rootPath, tree, watcher} = this
     const {type, payload, meta} = action
@@ -117,6 +129,8 @@ module.exports = class extends EventEmitter {
 
         // Perform a fs operation
         fs[methodName](...args, (err, data) => {
+          this.handleMethodSideEffects(methodName, args)
+
           console.log('done', methodName, id, err, data)
 
           client.send(createAction('response', id, err, data))
@@ -132,15 +146,23 @@ module.exports = class extends EventEmitter {
     }
   }
 
-  setRootPath(rootPath) {
+  setRootPath(rootPath, reset) {
     const {watcher, tree, transport} = this
-
-    // TODO: An option to stop existing path watchers
-
-    // Set new root path
-    this._rootPath = rootPath
-    tree.set(rootPath)
-    watcher.add(rootPath)
+    
+    if (reset) {
+      watcher.close()
+      this._rootPath = rootPath
+      tree.set(rootPath)
+      this._watcher = chokidar.watch(rootPath, {
+        persistent: true,
+        depth: 0,
+      })
+    } else {
+      // Set new root path
+      this._rootPath = rootPath
+      tree.set(rootPath)
+      watcher.add(rootPath)
+    }
 
     // Update all clients to new tree
     transport.send(createAction('initialState', tree.toJS(), rootPath))

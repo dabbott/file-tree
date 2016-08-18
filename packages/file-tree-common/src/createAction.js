@@ -44,10 +44,10 @@ const actions = {
       payload: { path },
     }
   },
-  rootPath: (path) => {
+  rootPath: (path, reset) => {
     return {
       type: 'rootPath',
-      payload: { path },
+      payload: { path, reset },
     }
   },
 }

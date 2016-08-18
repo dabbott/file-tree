@@ -24,13 +24,18 @@ export default class extends Component {
   static defaultProps = {
     plugins: [],
     nodeHeight: 40,
-    NodeComponent: DefaultNode,
+    renderNode: function(props) {
+      <DefaultNode {...props}/>
+    },
   }
 
   constructor(props) {
     super()
 
     this.handleClick = this.handleEvent.bind(this, 'onClick')
+    this.handleDoubleClick = this.handleEvent.bind(this, 'onDoubleClick')
+    this.handleMouseEnter = this.handleEvent.bind(this, 'onMouseEnter')
+    this.handleMouseLeave = this.handleEvent.bind(this, 'onMouseLeave')
     this.handleKeyUp = this.handleEvent.bind(this, 'onKeyUp')
     this.handleKeyDown = this.handleEvent.bind(this, 'onKeyDown')
     this.handleContextMenu = this.handleEvent.bind(this, 'onContextMenu')
@@ -91,7 +96,7 @@ export default class extends Component {
   }
 
   renderNode({index}) {
-    const {NodeComponent} = this.props
+    const {renderNode} = this.props
     const {metadata, indexCache} = this.state
     const {node, depth} = indexCache[index]
     const {path} = node
@@ -101,17 +106,22 @@ export default class extends Component {
       <div style={styles.nodeContainer}
         tabIndex={'0'}
         onClick={this.handleClick.bind(this, node, nodeMetadata, index)}
+        onDoubleClick={this.handleDoubleClick.bind(this, node, nodeMetadata, index)}
+        onMouseEnter={this.handleMouseEnter.bind(this, node, nodeMetadata, index)}
+        onMouseLeave={this.handleMouseLeave.bind(this, node, nodeMetadata, index)}
         onKeyUp={this.handleKeyUp.bind(this, node, nodeMetadata, index)}
         onKeyDown={this.handleKeyDown.bind(this, node, nodeMetadata, index)}
         onContextMenu={this.handleContextMenu.bind(this, node, nodeMetadata, index)}
       >
-        <NodeComponent
-          key={path}
-          node={node}
-          metadata={nodeMetadata}
-          depth={depth}
-          index={index}
-        />
+        {
+          renderNode({
+            key: path,
+            node,
+            metadata: nodeMetadata,
+            depth,
+            index,
+          }
+        )}
       </div>
     )
   }
