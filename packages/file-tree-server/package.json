@@ -1,13 +1,13 @@
 {
   "name": "file-tree-server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "file-tree-common": "^0.0.2",
+    "file-tree-common": "^0.0.3",
     "fs-extra": "^0.30.0"
   },
   "author": "",
