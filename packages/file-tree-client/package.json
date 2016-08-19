@@ -1,13 +1,13 @@
 {
   "name": "file-tree-client",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "file-tree-common": "^0.0.3"
+    "file-tree-common": "^0.0.4"
   },
   "author": "",
   "license": "ISC"
