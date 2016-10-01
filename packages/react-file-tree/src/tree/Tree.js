@@ -103,7 +103,8 @@ export default class extends Component {
     const nodeMetadata = metadata[path] || {}
 
     return (
-      <div style={styles.nodeContainer}
+      <div
+        style={styles.nodeContainer}
         tabIndex={'0'}
         onClick={this.handleClick.bind(this, node, nodeMetadata, index)}
         onDoubleClick={this.handleDoubleClick.bind(this, node, nodeMetadata, index)}
@@ -120,8 +121,8 @@ export default class extends Component {
             metadata: nodeMetadata,
             depth,
             index,
-          }
-        )}
+          })
+        }
       </div>
     )
   }

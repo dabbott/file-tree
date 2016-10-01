@@ -117,8 +117,16 @@ export const filter = (node, f, limit = Infinity) => {
   return items
 }
 
-export const search = (node, matcher, limit) => {
-  return filter(node, (node) => node.path.match(matcher), limit)
+export const search = (node, matcher, type, limit) => {
+  const f = (node) => {
+    if (type && node.type !== type) {
+      return false
+    } else {
+      return node.path.match(matcher)
+    }
+  }
+
+  return filter(node, f, limit)
 }
 
 export const ensureNode = (dirPath, state) => {

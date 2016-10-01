@@ -1,6 +1,6 @@
 import EventEmitter from 'events'
 
-import { Tree, WorkQueue, createAction, chokidarAdapter, fsAdapter } from 'file-tree-common'
+import { Tree, WorkQueue, createAction, chokidarAdapter, fsAdapter, treeUtils } from 'file-tree-common'
 
 let requestId = 0
 const getRequestId = () => ++requestId
@@ -131,5 +131,17 @@ module.exports = class extends EventEmitter {
 
   setRootPath(path, reset) {
     this._transport.send(createAction('rootPath', path, reset))
+  }
+
+  filter(f, limit) {
+    const {tree: {state: {tree}}} = this
+
+    return treeUtils.filter(tree, f, limit)
+  }
+
+  search(matcher, type, limit) {
+    const {tree: {state: {tree}}} = this
+
+    return treeUtils.search(tree, matcher, type, limit)
   }
 }
