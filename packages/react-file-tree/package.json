@@ -1,6 +1,6 @@
 {
   "name": "react-file-tree",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "dependencies": {
     "css-loader": "^0.23.1",
     "fast-memoize": "^1.0.0",
-    "file-tree-common": "^0.0.4",
+    "file-tree-common": "^0.0.5",
     "lodash": "^4.13.1",
     "lodash.memoize": "^4.1.0",
     "react-addons-shallow-compare": "^15.1.0",
