@@ -89,15 +89,36 @@ export const countVisibleNodes = (node, metadata) => {
 export const traverse = (node, f, filePath) => {
   filePath = filePath || node.path
 
-  f(node, filePath)
+  const result = f(node, filePath)
+
+  // Exit early if false is returned
+  if (result === false) return result
 
   if (node.type === 'directory') {
     const {children} = node
 
     for (let key in children) {
-      traverse(children[key], f, path.join(filePath, key))
+      const result = traverse(children[key], f, path.join(filePath, key))
+
+      if (result === false) return result
     }
   }
+}
+
+export const filter = (node, f, limit = Infinity) => {
+  const items = []
+
+  traverse(node, (node, filePath) => {
+    f(node) && items.push(node)
+
+    if (items.length >= limit) return false
+  })
+
+  return items
+}
+
+export const search = (node, matcher, limit) => {
+  return filter(node, (node) => node.path.match(matcher), limit)
 }
 
 export const ensureNode = (dirPath, state) => {

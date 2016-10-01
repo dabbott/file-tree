@@ -4,6 +4,7 @@ export createAction from './createAction'
 
 export normalizePlugins from './utils/normalizePlugins'
 export chokidarAdapter from './utils/chokidarAdapter'
+export walkAdapter from './utils/walkAdapter'
 export fsAdapter from './utils/fsAdapter'
 export * as pathUtils from './utils/pathUtils'
 export * as treeUtils from './utils/treeUtils'

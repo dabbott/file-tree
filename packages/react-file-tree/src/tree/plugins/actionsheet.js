@@ -1,5 +1,7 @@
 import React, { Component, PropTypes } from 'react'
 import nodePath from 'path'
+import { treeUtils } from 'file-tree-common'
+const { search } = treeUtils
 
 const style = {
   position: 'absolute',
@@ -89,6 +91,16 @@ const operations = {
 
     controller.setRootPath(newPath)
   },
+  search: function (controller, node) {
+    this.setState({overlay: null})
+
+    const text = maybePrompt(`Search filenames`)
+
+    const startTime = +new Date()
+    console.log(search(node, text, 30).map(node => node.path))
+    console.log('took', +new Date() - startTime)
+  },
+
 }
 
 export default {
@@ -107,6 +119,7 @@ export default {
     actions.push([`Rename ${name}`, operations.rename])
     actions.push([`Delete ${name}`, operations.delete])
     actions.push([`Set root path`, operations.setRootPath])
+    actions.push([`Search filenames`, operations.search])
 
     actions = actions.map(([title, f]) => [title, f.bind(this, controller, node)])
 

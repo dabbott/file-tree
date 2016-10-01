@@ -2,12 +2,22 @@ import EventEmitter from 'events'
 import chokidar from 'chokidar'
 import fs from 'fs-extra'
 
-import { Tree, WorkQueue, chokidarAdapter, createAction } from 'file-tree-common'
+import { Tree, WorkQueue, chokidarAdapter, walkAdapter, createAction } from 'file-tree-common'
+
+const defaultOptions = {
+  scan: false,
+}
 
 module.exports = class extends EventEmitter {
 
-  constructor(transport, rootPath) {
+  constructor(transport, rootPath, options = defaultOptions) {
     super()
+
+    if (options !== defaultOptions) {
+      options = {...defaultOptions, ...options}
+    }
+
+    this.options = options
 
     this._transport = transport
     this._rootPath = rootPath
@@ -42,7 +52,8 @@ module.exports = class extends EventEmitter {
 
   initialize() {
     const {rootPath, tree, watcher, transport, _workQueue: workQueue, _batchedActions: batchedActions} = this
-    const updateTree = chokidarAdapter(tree, true)
+    const updateTreeFromWatcher = chokidarAdapter(tree)
+    const updateTreeFromWalk = walkAdapter(tree)
     const enqueueAction = (action) => batchedActions.push(action)
 
     workQueue.on('finish', this.handleFinishQueue.bind(this))
@@ -60,11 +71,22 @@ module.exports = class extends EventEmitter {
       this.emit('event', action)
 
       // Update the tree
-      updateTree(name, path, stat)
+      updateTreeFromWatcher(name, path, stat)
 
       // Enqueue the event. They are sent to clients in batches.
       workQueue.push(enqueueAction.bind(this, action))
     })
+
+    this.scan()
+  }
+
+  scan() {
+    if (!this.options.scan) return
+
+    const {rootPath, tree} = this
+    const updateTreeFromWalk = walkAdapter(tree)
+
+    fs.walk(rootPath).on('data', updateTreeFromWalk)
   }
 
   handleFinishQueue() {
@@ -79,7 +101,7 @@ module.exports = class extends EventEmitter {
   handleConnection(client) {
     const {tree, rootPath} = this
 
-    console.log('connection')
+    // console.log('connection')
 
     client.on('message', this.handleMessage.bind(this, client))
 
@@ -104,7 +126,7 @@ module.exports = class extends EventEmitter {
     const {rootPath, tree, watcher} = this
     const {type, payload, meta} = action
 
-    console.log('message', action)
+    // console.log('message', action)
 
     switch (type) {
       case 'watchPath': {
@@ -131,7 +153,7 @@ module.exports = class extends EventEmitter {
         fs[methodName](...args, (err, data) => {
           this.handleMethodSideEffects(methodName, args)
 
-          console.log('done', methodName, id, err, data)
+          // console.log('done', methodName, id, err, data)
 
           client.send(createAction('response', id, err, data))
 
@@ -148,7 +170,7 @@ module.exports = class extends EventEmitter {
 
   setRootPath(rootPath, reset) {
     const {watcher, tree, transport} = this
-    
+
     if (reset) {
       watcher.close()
       this._rootPath = rootPath
@@ -163,6 +185,8 @@ module.exports = class extends EventEmitter {
       tree.set(rootPath)
       watcher.add(rootPath)
     }
+
+    this.scan()
 
     // Update all clients to new tree
     transport.send(createAction('initialState', tree.toJS(), rootPath))

@@ -2,7 +2,7 @@ let actionCount = 0
 
 export default (tree, debug) => (eventName, path, stat) => {
   if (debug) {
-    console.log('action', actionCount++, '=>', eventName, path)
+    console.log('chokidar action', actionCount++, '=>', eventName, path)
   }
 
   switch (eventName) {
