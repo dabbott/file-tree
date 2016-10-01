@@ -5,4 +5,4 @@ import path from 'path'
 
 const { ipcMain } = electron
 
-const tree = new FileTreeServer(transport(ipcMain), path.join(__dirname, '..'))
+const tree = new FileTreeServer(transport(ipcMain), path.join(__dirname, '..'), {scan: true})

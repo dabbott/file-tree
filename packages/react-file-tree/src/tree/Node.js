@@ -1,5 +1,4 @@
 import React, { Component, PropTypes } from 'react'
-import shallowCompare from 'react-addons-shallow-compare'
 import nodePath from 'path'
 
 import NodeCaret from './NodeCaret'
@@ -16,14 +15,6 @@ export default class Node extends Component {
 
     this.state = {}
   }
-
-  // shouldComponentUpdate(nextProps, nextState, nextContext) {
-  //   const shouldUpdate = shallowCompare(this, nextProps, nextState)
-  //
-  //   // console.log('update', shouldUpdate, nextProps.node.path)
-  //
-  //   return shouldUpdate
-  // }
 
   render() {
     const {node, metadata, depth} = this.props

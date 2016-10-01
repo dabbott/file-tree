@@ -24,9 +24,7 @@ export default class extends Component {
   static defaultProps = {
     plugins: [],
     nodeHeight: 40,
-    renderNode: function(props) {
-      <DefaultNode {...props}/>
-    },
+    renderNode: (props) => <DefaultNode {...props} />,
   }
 
   constructor(props) {
