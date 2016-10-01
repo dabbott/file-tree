@@ -6,6 +6,7 @@ import { Tree, WorkQueue, chokidarAdapter, walkAdapter, createAction } from 'fil
 
 const defaultOptions = {
   scan: false,
+  maxScannedFiles: 10000,
 }
 
 module.exports = class extends EventEmitter {
@@ -51,45 +52,72 @@ module.exports = class extends EventEmitter {
   }
 
   initialize() {
-    const {rootPath, tree, watcher, transport, _workQueue: workQueue, _batchedActions: batchedActions} = this
-    const updateTreeFromWatcher = chokidarAdapter(tree)
-    const updateTreeFromWalk = walkAdapter(tree)
-    const enqueueAction = (action) => batchedActions.push(action)
+    const {tree, watcher, transport, _workQueue: workQueue} = this
 
-    workQueue.on('finish', this.handleFinishQueue.bind(this))
-    transport.on('connection', this.handleConnection.bind(this))
+    workQueue.on('finish', this._handleFinishQueue)
+    transport.on('connection', this._handleConnection)
 
-    tree.on('change', () => {
+    tree.on('change', this._onTreeChange)
+    watcher.on('all', this._onWatcherEvent.bind(this, chokidarAdapter(tree)))
+
+    this.options.scan && this.scan()
+  }
+
+  // Emit a change event when the tree changes
+  _onTreeChange = () => {
+    const {tree} = this
+
+    if (this.listenerCount('change') > 0) {
       const action = createAction('change', tree.toJS())
-
       this.emit('change', action)
-    })
+    }
+  }
 
-    watcher.on('all', (name, path, stat) => {
-      const action = createAction('event', name, path, stat)
+  // Emit an event on watcher updates
+  _onWatcherEvent = (updater, name, path, stat) => {
+    const {_workQueue: workQueue} = this
 
-      this.emit('event', action)
+    const action = createAction('event', name, path, stat)
 
-      // Update the tree
-      updateTreeFromWatcher(name, path, stat)
+    this.emit('event', action)
 
-      // Enqueue the event. They are sent to clients in batches.
-      workQueue.push(enqueueAction.bind(this, action))
-    })
+    // Update the tree
+    updater(name, path, stat)
 
-    this.scan()
+    // Enqueue the event. They are sent to clients in batches.
+    workQueue.push(this._enqueueAction.bind(this, action))
+  }
+
+  _enqueueAction = (action) => this._batchedActions.push(action)
+
+  _sendState = (transport = this.transport) => {
+    const {rootPath, tree} = this
+
+    transport.send(createAction('initialState', tree.toJS(), rootPath))
   }
 
   scan() {
-    if (!this.options.scan) return
+    const {rootPath, tree, transport, options} = this
+    const updateTree = walkAdapter(tree)
 
-    const {rootPath, tree} = this
-    const updateTreeFromWalk = walkAdapter(tree)
+    const stream = fs.walk(rootPath)
+    let limit = options.maxScannedFiles
 
-    fs.walk(rootPath).on('data', updateTreeFromWalk)
+    stream.on('data', (item) => {
+      updateTree(item)
+
+      if (limit-- < 0) {
+        stream.pause()
+        this._sendState()
+        console.log(`WARNING: file-tree-server walked over ${options.maxScannedFiles} paths, stopping.`)
+      }
+    })
+
+    // Update all clients, since we may have discovered thousands of new paths
+    stream.on('end', () => this._sendState())
   }
 
-  handleFinishQueue() {
+  _handleFinishQueue = () => {
     const {transport, _batchedActions: batchedActions} = this
     const actions = batchedActions.slice()
     const batchAction = createAction('batch', actions)
@@ -98,31 +126,32 @@ module.exports = class extends EventEmitter {
     transport.send(batchAction)
   }
 
-  handleConnection(client) {
+  _handleConnection = (client) => {
     const {tree, rootPath} = this
 
     // console.log('connection')
 
-    client.on('message', this.handleMessage.bind(this, client))
+    client.on('message', this._handleMessage.bind(this, client))
 
     if (rootPath) {
-      client.send(createAction("initialState", tree.toJS(), rootPath))
+      this._sendState(client)
     }
   }
 
-  handleMethodSideEffects(methodName, args) {
+  _handleMethodSideEffects(methodName, args) {
     const {rootPath, tree, watcher} = this
     switch(methodName) {
-      case 'rename':
+      case 'rename': {
         const [oldPath, newPath] = args
         if (newPath != rootPath && watcher.getWatched()[oldPath]) {
           watcher.add(newPath)
         }
-        break;
+        break
+      }
     }
   }
 
-  handleMessage(client, action) {
+  _handleMessage(client, action) {
     const {rootPath, tree, watcher} = this
     const {type, payload, meta} = action
 
@@ -151,7 +180,7 @@ module.exports = class extends EventEmitter {
 
         // Perform a fs operation
         fs[methodName](...args, (err, data) => {
-          this.handleMethodSideEffects(methodName, args)
+          this._handleMethodSideEffects(methodName, args)
 
           // console.log('done', methodName, id, err, data)
 
@@ -160,7 +189,7 @@ module.exports = class extends EventEmitter {
           // If the operation failed, the client may be in a bad state.
           // Push the server's accurate state to reset the client.
           if (err) {
-            client.send(createAction('initialState', tree.toJS(), rootPath))
+            this._sendState(client)
           }
         })
         break
@@ -186,10 +215,8 @@ module.exports = class extends EventEmitter {
       watcher.add(rootPath)
     }
 
-    this.scan()
-
-    // Update all clients to new tree
-    transport.send(createAction('initialState', tree.toJS(), rootPath))
+    this.options.scan && this.scan()
+    this._sendState()
   }
 
 }
