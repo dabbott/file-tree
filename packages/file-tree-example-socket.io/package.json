@@ -1,6 +1,6 @@
 {
   "name": "file-tree-example-socket.io",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "file-tree-client": "^0.0.6",
     "file-tree-client-transport-socket.io": "^0.0.4",
     "file-tree-server": "^0.0.6",
-    "file-tree-server-git": "^0.0.1",
+    "file-tree-server-git": "^0.0.7",
     "file-tree-server-transport-socket.io": "^0.0.4",
     "git-utils": "^4.1.2",
     "json-loader": "^0.5.4",
