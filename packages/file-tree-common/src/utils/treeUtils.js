@@ -2,22 +2,20 @@ import path from 'path'
 
 import { split } from './pathUtils'
 
-export const createDirectoryNode = (filePath, stat) => {
+export const createDirectoryNode = (filePath) => {
   return {
     type: 'directory',
     name: path.basename(filePath),
     path: filePath,
-    // stat,
     children: {},
   }
 }
 
-export const createFileNode = (filePath, stat) => {
+export const createFileNode = (filePath) => {
   return {
     type: 'file',
     name: path.basename(filePath),
     path: filePath,
-    // stat,
   }
 }
 

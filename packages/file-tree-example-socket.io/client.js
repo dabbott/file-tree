@@ -11,7 +11,7 @@ const fileTree = new FileTreeClient(transport(socket))
 
 const Node = ({node, metadata, depth}) => {
   const {type, name, path} = node
-  const {expanded, selected} = metadata
+  const {expanded, selected, trackedByGit} = metadata
 
   const caret = type !== 'directory' ? null : expanded ? '▼' : '►'
 
@@ -22,6 +22,7 @@ const Node = ({node, metadata, depth}) => {
     WebkitUserSelect: 'none',
     cursor: 'default',
     color: selected ? 'blue' : 'black',
+    opacity: (trackedByGit || depth === 0) ? 1 : 0.4,
   }
 
   return (

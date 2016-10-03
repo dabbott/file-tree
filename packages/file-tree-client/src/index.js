@@ -68,9 +68,9 @@ module.exports = class extends EventEmitter {
     switch (type) {
       case 'initialState': {
         console.log('loading initial tree', tree)
-        const {rootPath, state: {tree, stat}} = payload
+        const {rootPath, state: {tree, stat, metadata}} = payload
 
-        this.tree.set(rootPath, tree, stat)
+        this.tree.set(rootPath, tree, stat, metadata)
         break
       }
       case 'batch': {

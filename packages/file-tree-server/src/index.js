@@ -6,6 +6,7 @@ import { Tree, WorkQueue, eventAdapter, createAction } from 'file-tree-common'
 
 const defaultOptions = {
   scan: false,
+  stat: false,
   maxScannedFiles: 10000,
   plugins: [],
 }
@@ -98,9 +99,11 @@ module.exports = class extends EventEmitter {
 
   // Emit an event on watcher updates
   _onWatcherEvent = (name, path, stats) => {
-    const {_workQueue: workQueue} = this
+    const {_workQueue: workQueue, options} = this
 
-    const action = createAction('event', name, path, stats)
+    const action = options.stat ?
+      createAction('event', name, path, stats) :
+      createAction('event', name, path)
 
     // Emit an event - consumers may change the action object
     this.emit('event', action)
@@ -113,6 +116,7 @@ module.exports = class extends EventEmitter {
   // Emit an events during the recursive scan.
   // Don't push to the client though, since that hurts perf. Wait till the end.
   _onWalkerEvent = (item) => {
+    const {options} = this
     const {path, stats} = item
 
     let name
@@ -122,7 +126,9 @@ module.exports = class extends EventEmitter {
       name = 'addDir'
     }
 
-    const action = createAction('event', name, path, stats)
+    const action = options.stat ?
+      createAction('event', name, path, stats) :
+      createAction('event', name, path)
 
     // Emit an event - consumers may change the action object
     this.emit('event', action)

@@ -44,12 +44,13 @@ export default class extends Component {
 
   mapPropsToState(props) {
     const {controller, plugins} = props
-    const {tree, metadata, version} = controller.tree.state
+    const {tree, metadata, stat, version} = controller.tree.state
 
     return {
       version,
       tree,
       metadata,
+      stat,
       visibleNodes: countVisibleNodes(tree, metadata),
       indexCache: getVisibleNodesByIndex(tree, metadata),
       plugins: normalizePlugins(plugins, PLUGIN_MAP),
@@ -95,7 +96,7 @@ export default class extends Component {
 
   renderNode({index}) {
     const {renderNode} = this.props
-    const {metadata, indexCache} = this.state
+    const {metadata, stat, indexCache} = this.state
     const {node, depth} = indexCache[index]
     const {path} = node
     const nodeMetadata = metadata[path] || {}
@@ -117,6 +118,7 @@ export default class extends Component {
             key: path,
             node,
             metadata: nodeMetadata,
+            stat: stat[path],
             depth,
             index,
           })

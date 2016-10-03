@@ -46,8 +46,12 @@ class Tree extends EventEmitter {
       _state.stat = stat || {}
     }
 
-    if (metadata || ! _state.metadata) {
+    if (! _state.metadata) {
       _state.metadata = metadata || {}
+    } else {
+      for (let path in metadata) {
+        this.mergeMetadata(path, metadata[path])
+      }
     }
 
     this.finishTransaction()
@@ -122,19 +126,36 @@ class Tree extends EventEmitter {
 
     return item
   }
-  addFile(filePath, stat) {
-    return this.add(filePath, createFileNode(filePath, stat))
-  }
-  addDir(dirPath, stat) {
-    const {rootPath} = this
+  addFile(filePath, stat, metadata) {
+    const item = this.add(filePath, createFileNode(filePath))
 
-    // console.log('add dir', dirPath, 'root', rootPath)
-    if (! within(dirPath, rootPath) || dirPath === rootPath) {
-      console.log('No need to add', dirPath)
-      return
+    if (item) {
+      if (stat) {
+        this._state.stat[filePath] = stat
+      }
+      metadata && this.mergeMetadata(filePath, metadata)
     }
 
-    return this.add(dirPath, createDirectoryNode(dirPath, stat))
+    return item
+  }
+  addDir(dirPath, stat, metadata) {
+    const {rootPath} = this
+
+    if (! within(dirPath, rootPath) || dirPath === rootPath) {
+      console.log('No need to add', dirPath)
+      return null
+    }
+
+    const item = this.add(dirPath, createDirectoryNode(dirPath))
+
+    if (item) {
+      if (stat) {
+        this._state.stat[dirPath] = stat
+      }
+      metadata && this.mergeMetadata(dirPath, metadata)
+    }
+
+    return item
   }
   remove(itemPath) {
     const parentPath = path.dirname(itemPath)
@@ -161,11 +182,13 @@ class Tree extends EventEmitter {
     this.remove(itemPath)
   }
   move(oldPath, newPath) {
+    const {_state: {metadata}} = this
+    const itemMetadata = metadata[oldPath]
     const item = this.remove(oldPath)
 
     if (item) {
-      this.moveMetadata(oldPath, newPath)
       this.add(newPath, item)
+      metadata[newPath] = itemMetadata
 
       // Update names and paths of children
       traverse(item, (child, childPath) => {
@@ -193,6 +216,17 @@ class Tree extends EventEmitter {
     }
     delete this._state.metadata[oldPath]
     this._state.metadata[newPath] = metadataCopy
+  }
+  mergeMetadata(itemPath, obj) {
+    const {_state: {metadata}} = this
+
+    let itemMetadata = metadata[itemPath]
+
+    if (!itemMetadata) {
+      metadata[itemPath] = obj
+    } else {
+      Object.assign(itemMetadata, obj)
+    }
   }
   setMetadataField(itemPath, field, value) {
     let metadata = this._state.metadata[itemPath]

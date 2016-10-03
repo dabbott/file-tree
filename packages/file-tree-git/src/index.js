@@ -9,8 +9,14 @@ module.exports = {
   event({payload}) {
     if (!repo) return
 
-    const {name, path, stat} = payload
+    let {path, stat, metadata} = payload
 
-    stat.trackedByGit = !repo.isIgnored(repo.relativize(path))
+    const trackedByGit = !repo.isIgnored(repo.relativize(path))
+
+    if (trackedByGit) {
+      metadata = metadata || {}
+      metadata.trackedByGit = trackedByGit
+      payload.metadata = metadata
+    }
   },
 }
