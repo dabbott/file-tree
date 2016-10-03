@@ -1,6 +1,6 @@
 import EventEmitter from 'events'
 
-import { Tree, WorkQueue, createAction, chokidarAdapter, fsAdapter, treeUtils } from 'file-tree-common'
+import { Tree, WorkQueue, createAction, eventAdapter, fsAdapter, treeUtils } from 'file-tree-common'
 
 let requestId = 0
 const getRequestId = () => ++requestId
@@ -15,10 +15,9 @@ module.exports = class extends EventEmitter {
     this._requestMap = {}
     this._tree = new Tree()
     this._workQueue = new WorkQueue()
-    this._updateTreeOnEvent = chokidarAdapter(this._tree)
+    this._updateTreeOnEvent = eventAdapter(this._tree)
     this._updateTreeOnFSRequest = fsAdapter(this._tree)
 
-    this._emitEvent = this._emitAction.bind(this, "event")
     this._emitChange = this._emitAction.bind(this, "change")
     this._performAction = this._performAction.bind(this)
     this.startOperation = this.startOperation.bind(this)
@@ -47,6 +46,7 @@ module.exports = class extends EventEmitter {
     const {transport, tree, _workQueue: workQueue} = this
 
     tree.on('change', this._emitChange)
+    tree.on('version', this.emit.bind(this, 'version'))
     transport.on('message', this._performAction)
 
     workQueue.on('start', (taskCount) => {
@@ -81,11 +81,10 @@ module.exports = class extends EventEmitter {
         break
       }
       case 'event': {
-        const {name, path, stat} = payload
-        const task = this._updateTreeOnEvent.bind(null, name, path, stat)
+        const task = this._updateTreeOnEvent.bind(null, action)
 
-        console.log('task =>', name, path)
-        this._emitEvent(name, path, stat)
+        console.log('task =>', action.payload)
+        this.emit(action)
         workQueue.push(task)
         break
       }

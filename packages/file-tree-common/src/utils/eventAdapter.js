@@ -1,11 +1,13 @@
 let actionCount = 0
 
-export default (tree, debug) => (eventName, path, stat) => {
+export default (tree, debug) => ({payload}) => {
+  const {name, path, stat} = payload
+
   if (debug) {
-    console.log('chokidar action', actionCount++, '=>', eventName, path)
+    console.log('chokidar action', actionCount++, '=>', name, path)
   }
 
-  switch (eventName) {
+  switch (name) {
     case 'add': {
       tree.addFile(path, stat)
       break

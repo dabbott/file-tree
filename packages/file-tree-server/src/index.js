@@ -2,7 +2,7 @@ import EventEmitter from 'events'
 import chokidar from 'chokidar'
 import fs from 'fs-extra'
 
-import { Tree, WorkQueue, chokidarAdapter, walkAdapter, createAction } from 'file-tree-common'
+import { Tree, WorkQueue, eventAdapter, createAction } from 'file-tree-common'
 
 const defaultOptions = {
   scan: false,
@@ -32,6 +32,8 @@ module.exports = class extends EventEmitter {
       depth: 0,
     })
 
+    this._applyEventToTree = eventAdapter(this._tree)
+
     this.initialize()
   }
 
@@ -58,7 +60,8 @@ module.exports = class extends EventEmitter {
     transport.on('connection', this._handleConnection)
 
     tree.on('change', this._onTreeChange)
-    watcher.on('all', this._onWatcherEvent.bind(this, chokidarAdapter(tree)))
+    tree.on('version', this.emit.bind(this, 'version'))
+    watcher.on('all', this._onWatcherEvent)
 
     this.options.scan && this.scan()
   }
@@ -74,18 +77,36 @@ module.exports = class extends EventEmitter {
   }
 
   // Emit an event on watcher updates
-  _onWatcherEvent = (updater, name, path, stat) => {
+  _onWatcherEvent = (name, path, stats) => {
     const {_workQueue: workQueue} = this
 
-    const action = createAction('event', name, path, stat)
+    const action = createAction('event', name, path, stats)
 
+    // Emit an event - consumers may change the action object
     this.emit('event', action)
-
-    // Update the tree
-    updater(name, path, stat)
+    this._applyEventToTree(action)
 
     // Enqueue the event. They are sent to clients in batches.
     workQueue.push(this._enqueueAction.bind(this, action))
+  }
+
+  // Emit an events during the recursive scan.
+  // Don't push to the client though, since that hurts perf. Wait till the end.
+  _onWalkerEvent = (item) => {
+    const {path, stats} = item
+
+    let name
+    if (stats.isFile(path)) {
+      name = 'add'
+    } else if (stats.isDirectory(path)) {
+      name = 'addDir'
+    }
+
+    const action = createAction('event', name, path, stats)
+
+    // Emit an event - consumers may change the action object
+    this.emit('event', action)
+    this._applyEventToTree(action)
   }
 
   _enqueueAction = (action) => this._batchedActions.push(action)
@@ -98,13 +119,12 @@ module.exports = class extends EventEmitter {
 
   scan() {
     const {rootPath, tree, transport, options} = this
-    const updateTree = walkAdapter(tree)
 
     const stream = fs.walk(rootPath)
     let limit = options.maxScannedFiles
 
     stream.on('data', (item) => {
-      updateTree(item)
+      this._onWalkerEvent(item)
 
       if (limit-- < 0) {
         stream.pause()

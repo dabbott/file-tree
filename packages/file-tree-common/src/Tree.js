@@ -62,6 +62,7 @@ class Tree extends EventEmitter {
     _state.version++
 
     this.emit('change', this.state)
+    this.emit('version', _state.version)
   }
   startTransaction() {
     if (this.inTransaction) {
