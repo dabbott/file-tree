@@ -7,6 +7,7 @@ import { Tree, WorkQueue, eventAdapter, createAction } from 'file-tree-common'
 const defaultOptions = {
   scan: false,
   maxScannedFiles: 10000,
+  plugins: [],
 }
 
 module.exports = class extends EventEmitter {
@@ -19,18 +20,17 @@ module.exports = class extends EventEmitter {
     }
 
     this.options = options
+    this._applyPlugins(options.plugins)
 
     this._transport = transport
-    this._rootPath = rootPath
 
     this._workQueue = new WorkQueue(10)
     this._batchedActions = []
 
     this._tree = new Tree(rootPath)
-    this._watcher = chokidar.watch(rootPath, {
-      persistent: true,
-      depth: 0,
-    })
+    this._watcher = this._startWatcher(rootPath)
+
+    this.rootPath = rootPath
 
     this._applyEventToTree = eventAdapter(this._tree)
 
@@ -53,6 +53,11 @@ module.exports = class extends EventEmitter {
     return this._rootPath
   }
 
+  set rootPath(value) {
+    this._rootPath = value
+    this.emit('rootPath', value)
+  }
+
   initialize() {
     const {tree, watcher, transport, _workQueue: workQueue} = this
 
@@ -64,6 +69,21 @@ module.exports = class extends EventEmitter {
     watcher.on('all', this._onWatcherEvent)
 
     this.options.scan && this.scan()
+  }
+
+  _applyPlugins(plugins) {
+    plugins.forEach(plugin => {
+      Object.keys(plugin).forEach(key => {
+        this.on(key, plugin[key])
+      })
+    })
+  }
+
+  _startWatcher(rootPath) {
+    return chokidar.watch(rootPath, {
+      persistent: true,
+      depth: 0,
+    })
   }
 
   // Emit a change event when the tree changes
@@ -84,7 +104,7 @@ module.exports = class extends EventEmitter {
 
     // Emit an event - consumers may change the action object
     this.emit('event', action)
-    this._applyEventToTree(action)
+    this._applyEventToTree(action.payload)
 
     // Enqueue the event. They are sent to clients in batches.
     workQueue.push(this._enqueueAction.bind(this, action))
@@ -106,7 +126,7 @@ module.exports = class extends EventEmitter {
 
     // Emit an event - consumers may change the action object
     this.emit('event', action)
-    this._applyEventToTree(action)
+    this._applyEventToTree(action.payload)
   }
 
   _enqueueAction = (action) => this._batchedActions.push(action)
@@ -220,18 +240,13 @@ module.exports = class extends EventEmitter {
   setRootPath(rootPath, reset) {
     const {watcher, tree, transport} = this
 
+    this.rootPath = rootPath
+    tree.set(rootPath)
+
     if (reset) {
       watcher.close()
-      this._rootPath = rootPath
-      tree.set(rootPath)
-      this._watcher = chokidar.watch(rootPath, {
-        persistent: true,
-        depth: 0,
-      })
+      this._watcher = this._startWatcher(rootPath)
     } else {
-      // Set new root path
-      this._rootPath = rootPath
-      tree.set(rootPath)
       watcher.add(rootPath)
     }
 

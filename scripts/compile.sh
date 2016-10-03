@@ -5,6 +5,7 @@ BABEL=${BIN}/babel
 
 SOURCES=(
   react-file-tree
+  file-tree-git
   file-tree-client
   file-tree-common
   file-tree-server

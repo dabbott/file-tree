@@ -1,6 +1,6 @@
 let actionCount = 0
 
-export default (tree, debug) => ({payload}) => {
+export default (tree, debug) => (payload) => {
   const {name, path, stat} = payload
 
   if (debug) {

@@ -81,7 +81,7 @@ module.exports = class extends EventEmitter {
         break
       }
       case 'event': {
-        const task = this._updateTreeOnEvent.bind(null, action)
+        const task = this._updateTreeOnEvent.bind(null, action.payload)
 
         console.log('task =>', action.payload)
         this.emit(action)

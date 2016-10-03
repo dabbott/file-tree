@@ -20,6 +20,7 @@
     "file-tree-client": "^0.0.5",
     "file-tree-client-transport-socket.io": "^0.0.4",
     "file-tree-server": "^0.0.5",
+    "file-tree-server-git": "^0.0.1",
     "file-tree-server-transport-socket.io": "^0.0.4",
     "json-loader": "^0.5.4",
     "react": "^15.1.0",
