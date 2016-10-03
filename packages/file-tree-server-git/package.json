@@ -8,8 +8,5 @@
   },
   "dependencies": {},
   "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "git-utils": "^4.1.2"
-  }
+  "license": "ISC"
 }
