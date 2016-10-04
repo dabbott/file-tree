@@ -89,7 +89,8 @@ class Tree extends EventEmitter {
     const isWithin = within(filePath, rootPath)
 
     if (! isWithin) {
-      throw new Error(`Can't get path outside root`)
+      console.log(`file-tree-common/tree: Can't get path ${filePath} outside root ${rootPath}`)
+      return null
     }
 
     const parts = split(filePath)

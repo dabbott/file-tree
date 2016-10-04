@@ -10,11 +10,11 @@ module.exports = (GitUtils) => {
 
       let {path, stat, metadata} = payload
 
-      const trackedByGit = !repo.isIgnored(repo.relativize(path))
+      const ignoredByGit = repo.isIgnored(repo.relativize(path))
 
-      if (trackedByGit) {
+      if (ignoredByGit) {
         metadata = metadata || {}
-        metadata.trackedByGit = trackedByGit
+        metadata.ignoredByGit = ignoredByGit
         payload.metadata = metadata
       }
     },
