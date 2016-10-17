@@ -1,6 +1,7 @@
 import EventEmitter from 'events'
 import chokidar from 'chokidar'
 import fs from 'fs-extra'
+import path from 'path'
 
 import { Tree, WorkQueue, eventAdapter, createAction } from 'file-tree-common'
 
@@ -224,7 +225,11 @@ module.exports = class extends EventEmitter {
         const {methodName, args} = payload
         const {id} = meta
 
+
         // Perform a fs operation
+        if (methodName === 'rename') {
+          fs.mkdirpSync(path.dirname(args[1]))
+        }
         fs[methodName](...args, (err, data) => {
           this._handleMethodSideEffects(methodName, args)
 
